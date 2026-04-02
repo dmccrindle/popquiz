@@ -61,14 +61,14 @@ export default function Hero() {
           <img
             src="/pop-quiz-iphone.png"
             alt="Pop Quiz running on iPhone"
-            className="w-[60%] sm:w-[45%] h-auto drop-shadow-2xl animate-float-delay lg:absolute lg:z-0 lg:top-[8%] lg:left-[18%] lg:w-[32%]"
+            className="hidden lg:block lg:absolute lg:z-0 lg:top-[8%] lg:left-[18%] lg:w-[32%] h-auto drop-shadow-2xl animate-float-delay"
           />
           {/* iPad — mobile: in flow. Desktop: lower-right in front */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/pop-quiz-ipad.png"
             alt="Pop Quiz running on iPad"
-            className="w-full h-auto drop-shadow-2xl animate-float lg:absolute lg:z-10 lg:bottom-[3%] lg:right-[5%] lg:w-[80%]"
+            className="w-[90%] h-auto drop-shadow-2xl animate-float lg:absolute lg:z-10 lg:bottom-[3%] lg:right-[5%] lg:w-[80%]"
           />
         </div>
       </div>
