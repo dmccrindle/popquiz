@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #08081a;
+  --foreground: #f0f0f5;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+  font-family: "SF Pro Rounded", "SF Pro", ui-rounded, -apple-system,
+    BlinkMacSystemFont, "Nunito", "Varela Round", "Quicksand", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ring rotation animations — translate uses the ring center offset */
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.ring-cw {
+  animation: spin-cw var(--duration, 60s) linear infinite;
+}
+
+.ring-ccw {
+  animation: spin-ccw var(--duration, 60s) linear infinite;
+}
+
+/* Gentle floating bounce for hero device image */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+  50% { transform: translateY(-14px) scale(0.97) rotate(3deg); }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Blinking cursor for typing animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.7s step-end infinite;
+}
+
+/* Spinning vinyl record */
+@keyframes spin-record {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-record > * {
+  animation: spin-record 4s linear infinite;
+  transform-origin: center center;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .ring-cw,
+  .ring-ccw,
+  .animate-float,
+  .spin-record > * {
+    animation: none;
+  }
+}
