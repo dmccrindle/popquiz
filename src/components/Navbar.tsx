@@ -179,7 +179,7 @@ export default function Navbar() {
 
         {/* Right side: social + CTA */}
         <div className="hidden md:flex items-center gap-4">
-          {/* Instagram */}
+          {/* Instagram — uncomment and add href when ready
           <a
             href="#"
             className={`${textMuted} hover:opacity-80 transition-colors duration-300`}
@@ -206,8 +206,9 @@ export default function Navbar() {
               />
             </svg>
           </a>
+          */}
 
-          {/* TikTok */}
+          {/* TikTok — uncomment and add href when ready
           <a
             href="#"
             className={`${textMuted} hover:opacity-80 transition-colors duration-300`}
@@ -217,6 +218,7 @@ export default function Navbar() {
               <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.78a8.18 8.18 0 003.76.92V6.69z" />
             </svg>
           </a>
+          */}
 
           {/* Sign Up CTA */}
           <a

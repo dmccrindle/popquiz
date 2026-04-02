@@ -43,7 +43,7 @@ export default function AnimatedRings() {
               width: ring.width,
               height: ring.height,
               top: "50%",
-              left: "calc(100% - 250px)",
+              left: "clamp(50%, calc(100% - 250px), 75%)",
               marginTop: -(ring.height / 2),
               marginLeft: -(ring.width / 2),
             } as React.CSSProperties

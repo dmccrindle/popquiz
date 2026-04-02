@@ -54,20 +54,21 @@ export default function Hero() {
         </div>
 
         {/* Right column: device mockups */}
-        <div className="relative flex items-center justify-center lg:justify-start overflow-visible px-6 lg:px-0 min-h-[480px] lg:min-h-[600px]">
-          {/* iPhone — upper-left, behind iPad */}
+        {/* Mobile: stacked vertically. Desktop: overlapping absolute */}
+        <div className="relative flex flex-col items-center gap-6 px-6 py-8 lg:block lg:px-0 lg:py-0 lg:min-h-[600px]">
+          {/* iPhone — mobile: in flow. Desktop: upper-left behind iPad */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/pop-quiz-iphone.png"
             alt="Pop Quiz running on iPhone"
-            className="absolute z-0 top-[8%] left-[18%] w-[32%] h-auto drop-shadow-2xl animate-float-delay"
+            className="w-[60%] sm:w-[45%] h-auto drop-shadow-2xl animate-float-delay lg:absolute lg:z-0 lg:top-[8%] lg:left-[18%] lg:w-[32%]"
           />
-          {/* iPad — lower-right, in front */}
+          {/* iPad — mobile: in flow. Desktop: lower-right in front */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/pop-quiz-ipad.png"
             alt="Pop Quiz running on iPad"
-            className="absolute z-10 bottom-[3%] right-[5%] w-[80%] h-auto drop-shadow-2xl animate-float"
+            className="w-full h-auto drop-shadow-2xl animate-float lg:absolute lg:z-10 lg:bottom-[3%] lg:right-[5%] lg:w-[80%]"
           />
         </div>
       </div>
