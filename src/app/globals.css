@@ -51,6 +51,13 @@ body {
   will-change: transform;
 }
 
+/* Phase-offset float for secondary device */
+.animate-float-delay {
+  animation: float 9s ease-in-out infinite;
+  animation-delay: -3s;
+  will-change: transform;
+}
+
 /* Blinking cursor for typing animation */
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -70,6 +77,16 @@ body {
 .spin-record > * {
   animation: spin-record 4s linear infinite;
   transform-origin: center center;
+}
+
+/* Fade in for tab content swap */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
 }
 
 /* Respect reduced motion preferences */

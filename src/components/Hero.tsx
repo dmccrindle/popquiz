@@ -13,7 +13,7 @@ export default function Hero() {
       <AnimatedRings />
 
       {/* Content — 50/50 grid */}
-      <div className="relative z-10 w-full pt-24 pb-16 grid grid-cols-1 lg:grid-cols-2 items-center">
+      <div className="relative z-10 w-full pt-24 pb-16 grid grid-cols-1 lg:grid-cols-2 items-center [transform:translateZ(0)] [-webkit-transform:translateZ(0)]">
         {/* Left column: copy */}
         <div className="px-6 lg:pl-[max(1.5rem,calc((100vw-80rem)/2+1.5rem))] lg:pr-12 flex flex-col items-center lg:items-start text-center lg:text-left gap-6">
           <p className="text-sm text-accent-pink font-semibold tracking-wide uppercase">
@@ -35,7 +35,7 @@ export default function Hero() {
           </p>
 
           {/* Email signup form */}
-          <div className="mt-2">
+          <div className="mt-2 w-full max-w-lg">
             <SignupForm />
           </div>
 
@@ -53,13 +53,21 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right column: device mockup — 50% width, image bleeds off right edge */}
-        <div className="flex items-center justify-center lg:justify-start overflow-visible px-6 lg:px-0">
+        {/* Right column: device mockups */}
+        <div className="relative flex items-center justify-center lg:justify-start overflow-visible px-6 lg:px-0 min-h-[480px] lg:min-h-[600px]">
+          {/* iPhone — upper-left, behind iPad */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/pop-quiz-ipad-iphone.png"
-            alt="Pop Quiz running on iPad and iPhone"
-            className="w-[90%] max-w-none lg:w-[130%] h-auto drop-shadow-2xl animate-float"
+            src="/pop-quiz-iphone.png"
+            alt="Pop Quiz running on iPhone"
+            className="absolute z-0 top-[8%] left-[18%] w-[32%] h-auto drop-shadow-2xl animate-float-delay"
+          />
+          {/* iPad — lower-right, in front */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/pop-quiz-ipad.png"
+            alt="Pop Quiz running on iPad"
+            className="absolute z-10 bottom-[3%] right-[5%] w-[80%] h-auto drop-shadow-2xl animate-float"
           />
         </div>
       </div>

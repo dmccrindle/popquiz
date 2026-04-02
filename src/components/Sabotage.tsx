@@ -109,7 +109,7 @@ export default function Sabotage() {
     <section id="sabotage" className="relative pt-12 sm:pt-16 pb-0 bg-white text-gray-900 overflow-hidden">
       <div
         ref={containerRef}
-        className="relative z-10 mx-auto max-w-7xl px-6 grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-10 items-stretch"
+        className="relative z-10 mx-auto max-w-5xl px-6 grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-10 items-stretch"
       >
         {/* Left column: text */}
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left pb-12 sm:pb-16">
@@ -150,11 +150,14 @@ export default function Sabotage() {
           </p>
         </div>
 
-        {/* Right column: device mockup / video placeholder */}
+        {/* Right column: image */}
         <div className="flex items-stretch justify-center lg:justify-end">
-          <div className="relative w-full max-w-[400px] min-h-[460px] rounded-t-[2.5rem] bg-gray-900 border border-gray-800 border-b-0 flex items-center justify-center overflow-hidden -mt-12 sm:-mt-16">
-            <span className="text-white/30 text-sm">Sabotage video</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/taunted-love.jpg"
+            alt="Sabotage feature"
+            className="w-full max-w-[400px] object-cover rounded-t-[2.5rem] -mt-12 sm:-mt-16"
+          />
         </div>
 
         {/* Particle layer */}
