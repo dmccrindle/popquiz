@@ -1,6 +1,7 @@
 "use client";
 
 import AnimatedRings from "./AnimatedRings";
+import SignupForm from "./SignupForm";
 
 export default function Hero() {
   return (
@@ -34,22 +35,9 @@ export default function Hero() {
           </p>
 
           {/* Email signup form */}
-          <form
-            className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-2"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              type="email"
-              placeholder="Interested or want to help test?"
-              className="flex-1 px-5 py-3 rounded-full bg-white border border-white/20 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-accent-pink/50 transition-all"
-            />
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-sm font-semibold text-white hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              Sign Up
-            </button>
-          </form>
+          <div className="mt-2">
+            <SignupForm />
+          </div>
 
           {/* App Store badge */}
           <div className="flex items-center gap-3 mt-2">

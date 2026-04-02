@@ -1,5 +1,7 @@
 "use client";
 
+import SignupForm from "./SignupForm";
+
 export default function EmailSignup() {
   return (
     <section id="signup" className="relative py-24 overflow-hidden bg-black">
@@ -21,22 +23,9 @@ export default function EmailSignup() {
           . Drop your email and we&apos;ll keep you in the loop.
         </p>
 
-        <form
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <input
-            type="email"
-            placeholder="Interested or want to help test?"
-            className="flex-1 px-5 py-3 rounded-full bg-white border border-white/20 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-accent-pink/50 transition-all"
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-sm font-semibold text-white hover:opacity-90 transition-opacity whitespace-nowrap"
-          >
-            Sign Up
-          </button>
-        </form>
+        <div className="flex justify-center">
+          <SignupForm />
+        </div>
 
         <p className="mt-6 text-xs text-white/30">
           No spam. Just buzz. And the good kind.
