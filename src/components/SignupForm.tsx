@@ -41,9 +41,9 @@ export default function SignupForm() {
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-md">
+    <div className="flex flex-col gap-2 w-full">
       <form
-        className="flex flex-col sm:flex-row gap-3 w-full"
+        className="flex flex-row gap-3 w-full"
         onSubmit={handleSubmit}
       >
         <input
@@ -52,7 +52,7 @@ export default function SignupForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Interested or want to help test?"
           required
-          className="flex-1 px-5 py-3 rounded-full bg-white border border-white/20 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-accent-pink/50 transition-all"
+          className="flex-1 min-w-0 px-5 py-3 rounded-full bg-white border border-white/20 text-sm text-gray-900 placeholder:text-gray-700 outline-none focus:ring-2 focus:ring-accent-pink/50 transition-all"
         />
         <button
           type="submit"
