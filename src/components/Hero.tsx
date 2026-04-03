@@ -28,10 +28,10 @@ export default function Hero() {
           </h1>
 
           <p className="max-w-lg text-base sm:text-lg text-white/80 leading-relaxed">
-            Music trivia. Voice powered. Totally personal.{" "}
+            <strong>Music trivia. Voice powered. Totally personal.</strong><br />{" "}
             <span className="text-white/80">Pop Quiz</span> listens to your
             answer, scores it on the spot, and lets you play with up to four
-            friends on any device. Add it to the roster and give your game
+            friends on a single device. Add it to the roster and give your game
             nights the hit they deserve.
           </p>
 
