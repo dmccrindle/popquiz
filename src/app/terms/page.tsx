@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Use — Pop Quiz",
+  description:
+    "Pop Quiz terms of use: guidelines for using the app and website, intellectual property, disclaimers, and governing law.",
+  alternates: { canonical: "https://popquizparty.com/terms" },
 };
 
 export default function TermsPage() {

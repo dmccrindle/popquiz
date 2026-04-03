@@ -94,6 +94,9 @@ body {
   .ring-cw,
   .ring-ccw,
   .animate-float,
+  .animate-float-delay,
+  .animate-fade-in,
+  .animate-blink,
   .spin-record > * {
     animation: none;
   }

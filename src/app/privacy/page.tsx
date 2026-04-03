@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Pop Quiz",
+  description:
+    "Pop Quiz privacy policy: what we collect, how we use it, and your rights. We collect only your email address and will never sell it.",
+  alternates: { canonical: "https://popquizparty.com/privacy" },
 };
 
 export default function PrivacyPage() {

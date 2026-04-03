@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
+
 /**
  * 8 concentric rings that rotate in alternating directions.
  * Odd rings (1, 3, 5, 7) spin clockwise; even rings (2, 4, 6, 8) spin counter-clockwise.
  * Rings are centered ~60% from left (behind the device mockup area).
- * Each SVG is rendered directly via <img> with no wrapper — avoids bounding box clipping.
+ * Each SVG is rendered directly via next/image — avoids bounding box clipping.
  */
 
 interface RingData {
@@ -30,18 +32,18 @@ export default function AnimatedRings() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {rings.map((ring, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           key={i}
           src={ring.src}
           alt=""
           aria-hidden="true"
+          width={ring.width}
+          height={ring.height}
+          unoptimized
           className={`absolute will-change-transform ${ring.direction}`}
           style={
             {
               "--duration": ring.duration,
-              width: ring.width,
-              height: ring.height,
               top: "50%",
               left: "clamp(50%, calc(100% - 250px), 75%)",
               marginTop: -(ring.height / 2),

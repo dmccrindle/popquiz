@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 const cards = [
   { src: "/trivia-card-1.svg", alt: "Trivia Card 1" },
@@ -391,6 +392,9 @@ export default function DailyTrivia() {
             {cards.map((card, i) => (
               <div
                 key={i}
+                role={isCardVisible(i) ? "button" : undefined}
+                tabIndex={isCardVisible(i) ? 0 : undefined}
+                aria-label={isCardVisible(i) ? `View trivia card ${i + 1}` : undefined}
                 className="absolute w-[280px] sm:w-[340px] lg:w-[400px]"
                 style={{
                   ...getCardStyle(i),
@@ -401,11 +405,20 @@ export default function DailyTrivia() {
                   cursor: isCardVisible(i) ? "pointer" : "default",
                 }}
                 onClick={() => isCardVisible(i) && handleCardClick(i)}
+                onKeyDown={(e) => {
+                  if (isCardVisible(i) && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    handleCardClick(i);
+                  }
+                }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={card.src}
-                  alt={card.alt}
+                  alt=""
+                  aria-hidden="true"
+                  width={400}
+                  height={260}
+                  unoptimized
                   className="w-full h-auto rounded-2xl select-none pointer-events-none"
                   draggable={false}
                 />

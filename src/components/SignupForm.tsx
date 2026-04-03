@@ -46,7 +46,11 @@ export default function SignupForm() {
         className="flex flex-row gap-3 w-full"
         onSubmit={handleSubmit}
       >
+        <label htmlFor="signup-email" className="sr-only">
+          Email address
+        </label>
         <input
+          id="signup-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

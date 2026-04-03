@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
 
 const emojis = ["😡", "💀", "🤡", "🍆", "🔥", "👻"];
 
@@ -138,6 +139,7 @@ export default function Sabotage() {
               <button
                 key={emoji}
                 onClick={(e) => handleEmojiClick(emoji, e)}
+                aria-label={`Launch ${emoji} emoji burst`}
                 className="w-14 h-14 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-90 cursor-pointer select-none"
               >
                 {emoji}
@@ -152,10 +154,11 @@ export default function Sabotage() {
 
         {/* Right column: image */}
         <div className="flex items-stretch justify-center lg:justify-end">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/taunted-love.jpg"
-            alt="Sabotage feature"
+            alt="Two people laughing while playing Pop Quiz sabotage mode"
+            width={3658}
+            height={3980}
             className="w-full max-w-[400px] object-cover rounded-t-[2.5rem] -mt-12 sm:-mt-16"
           />
         </div>
@@ -166,6 +169,7 @@ export default function Sabotage() {
             <span
               key={p.id}
               className="absolute text-2xl select-none"
+              aria-hidden="true"
               style={{
                 left: p.x,
                 top: p.y,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 
 const genres = [
   { label: "80s", color: "border-orange-400 text-orange-400" },
@@ -151,7 +152,7 @@ export default function MusicSelection() {
               {genres.map((genre) => (
                 <div
                   key={genre.label}
-                  className={`w-[96px] h-[96px] sm:w-[96px] sm:h-[96px] max-[480px]:w-[72px] max-[480px]:h-[72px] rounded-2xl border-2 ${genre.color} flex items-center justify-center font-bold text-lg max-[480px]:text-sm cursor-pointer hover:scale-105 transition-transform text-center leading-tight whitespace-pre-line`}
+                  className={`w-[96px] h-[96px] sm:w-[96px] sm:h-[96px] max-[480px]:w-[72px] max-[480px]:h-[72px] rounded-2xl border-2 ${genre.color} flex items-center justify-center font-bold text-lg max-[480px]:text-sm text-center leading-tight whitespace-pre-line`}
                 >
                   {genre.label}
                 </div>
@@ -174,12 +175,14 @@ export default function MusicSelection() {
               {artists.map((artist, i) => (
                 <div
                   key={i}
-                  className="w-[96px] h-[96px] sm:w-[96px] sm:h-[96px] max-[480px]:w-[72px] max-[480px]:h-[72px] rounded-2xl border-2 border-white overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                  className="w-[96px] h-[96px] sm:w-[96px] sm:h-[96px] max-[480px]:w-[72px] max-[480px]:h-[72px] rounded-2xl border-2 border-white overflow-hidden"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={artist.src}
-                    alt=""
+                    alt={`Artist ${i + 1}`}
+                    width={96}
+                    height={96}
+                    unoptimized
                     className="w-full h-full object-cover"
                   />
                 </div>

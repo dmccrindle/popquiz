@@ -19,6 +19,7 @@ export default function Navbar() {
   const [isLight, setIsLight] = useState(false);
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const isScrolling = useRef(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Measure pill position for active link
   const updatePill = useCallback((index: number) => {
@@ -87,6 +88,39 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, [activeIndex, updatePill]);
 
+  // Focus trap for mobile menu
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const menu = menuRef.current;
+    if (!menu) return;
+    const focusable = menu.querySelectorAll<HTMLElement>(
+      "a, button, [tabindex]:not([tabindex=\"-1\"])"
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    menu.addEventListener("keydown", handleKeyDown);
+    return () => menu.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
   // Smooth scroll to section on click
   const handleNavClick = useCallback(
     (e: React.MouseEvent, index: number) => {
@@ -111,7 +145,7 @@ export default function Navbar() {
 
   // Dynamic colors based on background
   const textColor = isLight ? "text-gray-900" : "text-white";
-  const textMuted = isLight ? "text-gray-500" : "text-white/50";
+  const textMuted = isLight ? "text-gray-500" : "text-white/60";
   const pillBg = isLight
     ? "bg-black/[0.06] border-black/10"
     : "bg-white/[0.07] border-white/10";
@@ -122,6 +156,7 @@ export default function Navbar() {
         {/* Logo */}
         <a
           href="#"
+          aria-label="Pop Quiz — scroll to top"
           className="flex items-center"
           onClick={(e) => {
             e.preventDefault();
@@ -134,6 +169,7 @@ export default function Navbar() {
             viewBox="0 0 610 145"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
             className="transition-colors duration-300 mt-1"
           >
             <path
@@ -166,6 +202,7 @@ export default function Navbar() {
               }}
               href={link.href}
               onClick={(e) => handleNavClick(e, i)}
+              aria-current={activeIndex === i ? "true" : undefined}
               className={`relative z-10 px-4 py-1.5 text-sm font-bold rounded-full transition-colors duration-200 whitespace-nowrap ${
                 activeIndex === i
                   ? "text-white"
@@ -240,6 +277,8 @@ export default function Navbar() {
           className={`md:hidden p-2 transition-colors duration-300 ${textColor}`}
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-menu"
         >
           <svg
             width="24"
@@ -249,6 +288,7 @@ export default function Navbar() {
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
+            aria-hidden="true"
           >
             {mobileOpen ? (
               <>
@@ -269,12 +309,15 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div
+          id="mobile-menu"
+          ref={menuRef}
           className={`md:hidden mx-6 mb-4 px-4 pb-4 pt-2 flex flex-col gap-2 rounded-2xl backdrop-blur-md border transition-colors duration-300 ${pillBg}`}
         >
           {navLinks.map((link, i) => (
             <a
               key={link.href}
               href={link.href}
+              aria-current={activeIndex === i ? "true" : undefined}
               className={`px-4 py-3 text-sm font-bold rounded-xl transition-colors ${
                 activeIndex === i
                   ? "text-white bg-gradient-to-r from-accent-pink to-accent-purple"
