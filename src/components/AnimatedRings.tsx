@@ -17,6 +17,10 @@ interface RingData {
   direction: "ring-cw" | "ring-ccw";
 }
 
+interface AnimatedRingsProps {
+  center?: boolean;
+}
+
 const rings: RingData[] = [
   { src: "/rings/ring-01.svg", width: 445, height: 431, duration: "35s", direction: "ring-cw" },
   { src: "/rings/ring-02.svg", width: 504, height: 471, duration: "40s", direction: "ring-ccw" },
@@ -28,7 +32,7 @@ const rings: RingData[] = [
   { src: "/rings/ring-08.svg", width: 1341, height: 1293, duration: "105s", direction: "ring-ccw" },
 ];
 
-export default function AnimatedRings() {
+export default function AnimatedRings({ center = false }: AnimatedRingsProps) {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {rings.map((ring, i) => (
@@ -45,7 +49,7 @@ export default function AnimatedRings() {
             {
               "--duration": ring.duration,
               top: "50%",
-              left: "clamp(50%, calc(100% - 250px), 75%)",
+              left: center ? "50%" : "clamp(50%, calc(100% - 250px), 75%)",
               marginTop: -(ring.height / 2),
               marginLeft: -(ring.width / 2),
             } as React.CSSProperties
