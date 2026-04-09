@@ -82,25 +82,7 @@ export default function FeedbackForm() {
         </div>
       </fieldset>
 
-      {/* Message */}
-      <div className="space-y-1.5">
-        <label htmlFor="feedback-message" className="text-xs font-semibold text-white/50 uppercase tracking-wider">
-          Message <span className="text-accent-pink">*</span>
-        </label>
-        <textarea
-          id="feedback-message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Tell us what's on your mind…"
-          required
-          minLength={5}
-          maxLength={5000}
-          rows={5}
-          className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-sm text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-accent-pink focus:border-transparent transition-all resize-none"
-        />
-      </div>
-
-      {/* Optional fields */}
+      {/* Name + Email */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <label htmlFor="feedback-name" className="text-xs font-semibold text-white/50 uppercase tracking-wider">
@@ -129,6 +111,24 @@ export default function FeedbackForm() {
             className="w-full px-4 py-3 rounded-full bg-white/5 border border-white/15 text-sm text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-accent-pink focus:border-transparent transition-all"
           />
         </div>
+      </div>
+
+      {/* Message */}
+      <div className="space-y-1.5">
+        <label htmlFor="feedback-message" className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+          Message <span className="text-accent-pink">*</span>
+        </label>
+        <textarea
+          id="feedback-message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Tell us what's on your mind…"
+          required
+          minLength={5}
+          maxLength={5000}
+          rows={5}
+          className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 text-sm text-white placeholder:text-white/30 outline-none focus:ring-2 focus:ring-accent-pink focus:border-transparent transition-all resize-none"
+        />
       </div>
 
       {status === "error" && (
