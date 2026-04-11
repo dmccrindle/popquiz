@@ -74,6 +74,14 @@ export default function Hero() {
             priority
             className="w-[90%] h-auto drop-shadow-2xl animate-float lg:absolute lg:z-10 lg:bottom-[3%] lg:right-[5%] lg:w-[80%]"
           />
+          {/* Apple Watch — hidden on mobile */}
+          <Image
+            src="/pop-quiz-watch.png"
+            alt="Pop Quiz running on Apple Watch"
+            width={400}
+            height={476}
+            className="hidden lg:block lg:absolute lg:z-20 lg:bottom-[12%] lg:left-[11%] lg:w-[19%] h-auto drop-shadow-2xl animate-float-delay"
+          />
         </div>
       </div>
 

@@ -3,6 +3,68 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 
+const SPECIALTY_GENRES = [
+  "Bedroom Pop", "Seattle Grunge", "Laurel Canyon", "Britpop", "Riot Grrrl",
+  "Indie Sleaze", "Divas", "Goth", "Motown", "Ragtime", "Trip Hop", "Psych Rock",
+  "Dancehall", "Reggaeton", "Industrial", "Madchester", "CBGB Punk", "Paisley Park",
+  "Sunshine Pop", "Southern Rock", "Detroit Rock", "Power Ballads", "One-Hit Wonders",
+  "Yacht Rock", "Boy Bands", "Girl Groups", "Summer Anthems",
+];
+
+const ITEM_PX = 88;
+
+function GenreScrollMarquee() {
+  const [index, setIndex] = useState(0);
+  const [withTransition, setWithTransition] = useState(true);
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+
+    const id = setInterval(() => setIndex((prev) => prev + 1), 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (index === SPECIALTY_GENRES.length) {
+      setWithTransition(false);
+      setIndex(0);
+    }
+  }, [index]);
+
+  useEffect(() => {
+    if (!withTransition) {
+      const t = setTimeout(() => setWithTransition(true), 50);
+      return () => clearTimeout(t);
+    }
+  }, [withTransition]);
+
+  return (
+    <div
+      className="absolute inset-0 overflow-hidden pointer-events-none select-none"
+      aria-hidden="true"
+    >
+      <div
+        style={{
+          transform: `translateY(-${index * ITEM_PX}px)`,
+          transition: withTransition ? "transform 0.55s ease" : "none",
+          willChange: "transform",
+        }}
+      >
+        {[...SPECIALTY_GENRES, ...SPECIALTY_GENRES].map((name, i) => (
+          <div
+            key={i}
+            className="flex items-center font-extrabold text-white opacity-[0.05] tracking-tight px-8"
+            style={{ height: ITEM_PX, fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}
+          >
+            {name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const genres = [
   { label: "80s", color: "border-orange-400 text-orange-400" },
   { label: "Rock", color: "border-green-400 text-green-400" },
@@ -112,6 +174,7 @@ export default function MusicSelection() {
       ref={sectionRef}
       className="relative py-24 overflow-hidden bg-[#1a2744]"
     >
+      <GenreScrollMarquee />
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="text-center mb-16">
