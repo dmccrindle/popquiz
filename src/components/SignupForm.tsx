@@ -54,7 +54,7 @@ export default function SignupForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Interested or want to help test?"
+          placeholder="Stay updated on new categories and features"
           required
           className="flex-1 min-w-0 px-5 py-3 rounded-full bg-white border border-white/20 text-sm text-gray-900 placeholder:text-gray-700 outline-none focus:ring-[3px] focus:ring-accent-pink transition-all"
         />

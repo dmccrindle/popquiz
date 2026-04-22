@@ -15,12 +15,12 @@ export default function EmailSignup() {
         </h2>
 
         <p className="text-base text-white/80 leading-relaxed mb-8 max-w-xl mx-auto">
-          Pop Quiz is almost ready to take the stage. Sign up to be first in
-          line when it launches, get early updates, and{" "}
+          Pop Quiz Party is live on the App Store. Drop your email to stay in
+          the loop on new categories, features, and updates —{" "}
           <span className="text-white/80 font-medium">
-            grab a spot as a beta tester
+            and be first to know what&apos;s dropping next
           </span>
-          . Drop your email and we&apos;ll keep you in the loop.
+          .
         </p>
 
         <div className="flex justify-center">
