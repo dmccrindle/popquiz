@@ -263,11 +263,7 @@ export default function Navbar() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Download Pop Quiz Party on the App Store"
-            className={`px-5 py-2 text-sm font-semibold rounded-full border-2 transition-colors duration-300 ${
-              isLight
-                ? "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
-                : "border-white text-white hover:bg-white hover:text-gray-900"
-            }`}
+            className="px-5 py-2 text-sm font-semibold rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white hover:opacity-90 transition-opacity"
           >
             Play Now
           </a>
@@ -337,11 +333,7 @@ export default function Navbar() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Download Pop Quiz Party on the App Store"
-            className={`mt-2 px-5 py-3 text-sm font-semibold rounded-full border-2 text-center transition-colors duration-300 ${
-              isLight
-                ? "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
-                : "border-white text-white hover:bg-white hover:text-gray-900"
-            }`}
+            className="mt-2 px-5 py-3 text-sm font-semibold rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-center hover:opacity-90 transition-opacity"
             onClick={() => setMobileOpen(false)}
           >
             Play Now
