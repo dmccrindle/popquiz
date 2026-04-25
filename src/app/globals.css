@@ -58,6 +58,18 @@ body {
   will-change: transform;
 }
 
+/* Faster, rotation-heavy float for foreground (watch) — parallax + tilt */
+@keyframes float-watch {
+  0%, 100% { transform: translateY(0) scale(1) rotate(-4deg); }
+  50% { transform: translateY(-14px) scale(0.97) rotate(6deg); }
+}
+
+.animate-float-fast {
+  animation: float-watch 6s ease-in-out infinite;
+  animation-delay: -1.5s;
+  will-change: transform;
+}
+
 /* Blinking cursor for typing animation */
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -95,6 +107,7 @@ body {
   .ring-ccw,
   .animate-float,
   .animate-float-delay,
+  .animate-float-fast,
   .animate-fade-in,
   .animate-blink,
   .spin-record > * {

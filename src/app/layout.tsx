@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://popquizparty.com"),
   title: "Pop Quiz — Music Trivia Party Game",
   description:
-    "11 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
+    "100 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
   alternates: {
     canonical: "https://popquizparty.com",
   },
   openGraph: {
     title: "Pop Quiz — Music Trivia Party Game",
     description:
-      "11 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
+      "100 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
     url: "https://popquizparty.com",
     siteName: "Pop Quiz",
     images: [
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Pop Quiz — Music Trivia Party Game",
     description:
-      "11 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
+      "100 million songs. Fastest voice wins. Pop Quiz listens to your answer, scores it on the spot, and lets you play with up to four friends on any device.",
     images: ["/og-image.png"],
   },
   icons: {
@@ -45,7 +45,7 @@ const jsonLd = {
   "@type": "SoftwareApplication",
   name: "Pop Quiz",
   description:
-    "Voice-powered music trivia party game. 11 million songs. Fastest voice wins.",
+    "Voice-powered music trivia party game. 100 million songs. Fastest voice wins.",
   applicationCategory: "GameApplication",
   operatingSystem: "iOS",
   url: "https://popquizparty.com",

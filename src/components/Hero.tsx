@@ -22,7 +22,7 @@ export default function Hero() {
           </p>
 
           <h1 className="text-[clamp(2rem,5vw,4rem)] font-extrabold leading-[1.05] tracking-tight">
-            11 million songs.
+            100 million songs.
             <br />
             Fastest voice wins.
           </h1>
@@ -85,7 +85,7 @@ export default function Hero() {
             alt="Pop Quiz running on Apple Watch"
             width={400}
             height={476}
-            className="hidden lg:block lg:absolute lg:z-20 lg:bottom-[12%] lg:left-[11%] lg:w-[19%] h-auto drop-shadow-2xl animate-float-delay"
+            className="hidden lg:block lg:absolute lg:z-20 lg:bottom-[12%] lg:left-[11%] lg:w-[19%] h-auto drop-shadow-2xl animate-float-fast"
           />
         </div>
       </div>
