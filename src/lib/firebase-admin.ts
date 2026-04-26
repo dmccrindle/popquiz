@@ -7,24 +7,26 @@ let adminDb: Firestore | undefined;
 function getAdminApp(): App {
   if (adminApp) return adminApp;
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (!projectId || !clientEmail || !privateKeyRaw) {
+  const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+  if (!b64) {
     throw new Error(
-      "Firebase admin env vars not configured. Need FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY (paste the private_key value from the service account JSON, with \\n sequences preserved)."
+      "FIREBASE_SERVICE_ACCOUNT_BASE64 not set. Run `cat service-account.json | base64 | tr -d '\\n'` and paste the output as a single Vercel env var."
     );
   }
 
-  // Vercel stores the env var as a literal string, so escaped \n must be unescaped to real newlines.
-  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
-
-  const serviceAccount: ServiceAccount = { projectId, clientEmail, privateKey };
+  let parsed: ServiceAccount;
+  try {
+    const json = Buffer.from(b64, "base64").toString("utf-8");
+    parsed = JSON.parse(json);
+  } catch (e) {
+    throw new Error(
+      `FIREBASE_SERVICE_ACCOUNT_BASE64 could not be decoded/parsed: ${e instanceof Error ? e.message : "unknown"}`
+    );
+  }
 
   const existing = getApps().find((a) => a.name === "admin");
   adminApp =
-    existing ?? initializeApp({ credential: cert(serviceAccount) }, "admin");
+    existing ?? initializeApp({ credential: cert(parsed) }, "admin");
   return adminApp;
 }
 
