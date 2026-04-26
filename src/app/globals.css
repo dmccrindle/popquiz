@@ -101,6 +101,46 @@ body {
   animation: fade-in 0.35s ease-out both;
 }
 
+/* Admin shared utilities */
+.admin-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  color-scheme: dark;
+}
+.admin-input:focus {
+  border-color: rgba(255, 123, 253, 0.55);
+}
+.admin-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+.nav-btn:hover {
+  border-color: rgba(255, 123, 253, 0.55);
+  color: #ff7bfd;
+}
+
 /* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .ring-cw,
