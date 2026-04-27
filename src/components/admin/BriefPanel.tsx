@@ -32,6 +32,14 @@ export default function BriefPanel() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
+  const [editedItems, setEditedItems] = useState<BriefItem[]>([]);
+  const [editedReleases, setEditedReleases] = useState<ReleaseItem[]>([]);
+
+  useEffect(() => {
+    setEditedItems(brief?.items ?? []);
+    setEditedReleases(brief?.releases ?? []);
+  }, [brief]);
+
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -89,8 +97,20 @@ export default function BriefPanel() {
     }
   }
 
+  function updateItemPost(i: number, value: string) {
+    setEditedItems((curr) =>
+      curr.map((it, idx) => (idx === i ? { ...it, suggested_post: value } : it))
+    );
+  }
+
+  function updateReleaseAngle(i: number, value: string) {
+    setEditedReleases((curr) =>
+      curr.map((r, idx) => (idx === i ? { ...r, angle: value } : r))
+    );
+  }
+
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-4xl space-y-5 sm:space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-6xl space-y-5 sm:space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           {brief ? (
@@ -130,42 +150,106 @@ export default function BriefPanel() {
             <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
               Today&apos;s moments
             </h2>
-            {brief.items.map((item, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold text-white leading-tight">
-                      {item.headline}
-                    </h3>
-                    <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                      {item.angle}
-                    </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {editedItems.map((item, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3 flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-white leading-tight">
+                        {item.headline}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                        {item.angle}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold text-accent-pink uppercase tracking-wider px-2 py-1 bg-accent-pink/10 rounded-full shrink-0">
+                      #{i + 1}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-accent-pink uppercase tracking-wider px-2 py-1 bg-accent-pink/10 rounded-full shrink-0">
-                    #{i + 1}
-                  </span>
+                  <textarea
+                    value={item.suggested_post}
+                    onChange={(e) => updateItemPost(i, e.target.value)}
+                    rows={4}
+                    className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white/85 leading-relaxed resize-y focus:outline-none focus:border-accent-pink/50"
+                  />
+                  <div className="flex items-center justify-between gap-3 pt-1">
+                    <span className="text-[10px] text-white/30">
+                      {item.suggested_post.length} chars
+                    </span>
+                    <button
+                      onClick={() => copy(item.suggested_post)}
+                      className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                    >
+                      Copy
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-start gap-3 pt-2 border-t border-white/5">
-                  <p className="text-sm text-white/85 leading-relaxed flex-1">
-                    &ldquo;{item.suggested_post}&rdquo;
-                  </p>
-                  <button
-                    onClick={() => copy(item.suggested_post)}
-                    className="shrink-0 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
-                    aria-label="Copy post to clipboard"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </section>
 
-          {brief.releases && brief.releases.length > 0 && (
-            <ReleaseWatch releases={brief.releases} onCopy={copy} />
+          {editedReleases.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
+                Release watch
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[...editedReleases]
+                  .map((r, originalIdx) => ({ r, originalIdx }))
+                  .sort((a, b) => a.r.date.localeCompare(b.r.date))
+                  .map(({ r, originalIdx }) => {
+                    const { label, isThisWeek, isPast } = formatReleaseDate(r.date);
+                    return (
+                      <div
+                        key={`${r.date}-${r.artist}-${originalIdx}`}
+                        className={`rounded-2xl border bg-white/[0.03] p-4 sm:p-5 space-y-3 flex flex-col ${
+                          isPast ? "border-white/5 opacity-60" : "border-white/10"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                              {r.type}
+                            </span>
+                            {isThisWeek && !isPast && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-pink/20 text-accent-pink">
+                                This week
+                              </span>
+                            )}
+                            <span className="text-xs text-white/40">{label}</span>
+                          </div>
+                          <h3 className="text-base font-bold text-white leading-tight">
+                            {r.artist} —{" "}
+                            <span className="text-white/85">{r.title}</span>
+                          </h3>
+                        </div>
+                        <textarea
+                          value={r.angle}
+                          onChange={(e) => updateReleaseAngle(originalIdx, e.target.value)}
+                          rows={3}
+                          className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white/85 leading-relaxed resize-y focus:outline-none focus:border-accent-pink/50"
+                        />
+                        <div className="flex items-center justify-between gap-3 pt-1">
+                          <span className="text-[10px] text-white/30">
+                            {r.angle.length} chars
+                          </span>
+                          <button
+                            onClick={() =>
+                              copy(`${r.artist} — ${r.title} (${label}). ${r.angle}`)
+                            }
+                            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </section>
           )}
         </div>
       )}
@@ -173,7 +257,11 @@ export default function BriefPanel() {
   );
 }
 
-function formatReleaseDate(iso: string): { label: string; isThisWeek: boolean; isPast: boolean } {
+function formatReleaseDate(iso: string): {
+  label: string;
+  isThisWeek: boolean;
+  isPast: boolean;
+} {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const release = new Date(iso + "T12:00:00");
@@ -181,64 +269,10 @@ function formatReleaseDate(iso: string): { label: string; isThisWeek: boolean; i
     return { label: iso, isThisWeek: false, isPast: false };
   }
   const diffDays = Math.round((release.getTime() - today.getTime()) / 86_400_000);
-  const label = release.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const label = release.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
   return { label, isThisWeek: diffDays >= 0 && diffDays <= 6, isPast: diffDays < 0 };
-}
-
-function ReleaseWatch({
-  releases,
-  onCopy,
-}: {
-  releases: ReleaseItem[];
-  onCopy: (text: string) => void;
-}) {
-  const sorted = [...releases].sort((a, b) => a.date.localeCompare(b.date));
-  return (
-    <section className="space-y-3">
-      <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
-        Release watch
-      </h2>
-      <div className="space-y-2">
-        {sorted.map((r, i) => {
-          const { label, isThisWeek, isPast } = formatReleaseDate(r.date);
-          return (
-            <div
-              key={`${r.date}-${r.artist}-${i}`}
-              className={`rounded-2xl border bg-white/[0.03] p-4 sm:p-5 space-y-2 ${
-                isPast ? "border-white/5 opacity-60" : "border-white/10"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-                      {r.type}
-                    </span>
-                    {isThisWeek && !isPast && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-pink/20 text-accent-pink">
-                        This week
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-base font-bold text-white leading-tight">
-                    {r.artist} — <span className="text-white/85">{r.title}</span>
-                  </h3>
-                  <p className="text-xs text-white/50 mt-0.5">{label}</p>
-                </div>
-                <button
-                  onClick={() =>
-                    onCopy(`${r.artist} — ${r.title} (${label}). ${r.angle}`)
-                  }
-                  className="shrink-0 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
-                >
-                  Copy
-                </button>
-              </div>
-              <p className="text-sm text-white/75 leading-relaxed">{r.angle}</p>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
 }

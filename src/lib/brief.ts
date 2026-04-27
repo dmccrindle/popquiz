@@ -71,9 +71,12 @@ export async function generateBrief(): Promise<Brief> {
       "You produce two things each day:",
       "  (1) `items`: 5 newsworthy music moments ripe for social posts — mix anniversaries (album/song birthdays, milestone gigs), artists in the news, beef/awards/charts moments, fun trivia ties.",
       "  (2) `releases`: 3-10 notable single/album/EP releases — this week and the next ~3 weeks. Use only releases you are confident about from your training data; lean toward big-name artists, confirmed announcements, and well-publicized release calendars. Include only dates today or later.",
+      "VOICE: knowledgeable friend who loves music. Drop a fact and a feeling. Assume the reader already cares — no need to convince them.",
+      "DO write: specific concrete details (album titles, dates, session anecdotes, chart positions, lyric callouts that aren't dunks). Treat readers as peers.",
+      "DO NOT write: engagement bait ('we'll wait', 'name one'), 'fans are FREAKING OUT', 'the internet can't handle', performative challenges, 'iconic', 'queen/king behavior', exclamation points, hashtag soup, marketing-deck phrases like 'cultural moment'.",
       "Skip generic celebrity gossip. Skip anything that wouldn't land with a music-savvy audience.",
-      "Each suggested_post should sound like it was written by a music fan, not a marketer. Keep them short and shareable.",
-      "Each release angle is one sharp sentence on why fans should care.",
+      "Each suggested_post is 1-2 sentences. Read like something a knowledgeable friend would text you, not something a brand would post. No setup-punchline structure.",
+      "Each release angle is one sharp sentence on why fans should care — same voice rules.",
     ].join(" "),
     messages: [
       {
