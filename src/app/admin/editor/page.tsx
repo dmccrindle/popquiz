@@ -6,7 +6,7 @@ export default function EditorPage() {
   return (
     <div>
       <AdminPageHeader title="Trivia Editor" subtitle="Edit the 3 daily trivia questions." />
-      <Suspense fallback={<div className="px-8 py-6 text-white/40 text-sm">Loading…</div>}>
+      <Suspense fallback={<div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 text-white/40 text-sm">Loading…</div>}>
         <EditorPanel />
       </Suspense>
     </div>

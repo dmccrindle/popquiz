@@ -37,7 +37,7 @@ export default function UpcomingPanel() {
   });
 
   return (
-    <div className="px-8 py-6 space-y-2 max-w-3xl">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-2 max-w-3xl">
       {loading ? (
         <p className="text-sm text-white/40">Loading…</p>
       ) : (
@@ -45,7 +45,7 @@ export default function UpcomingPanel() {
           <Link
             key={d.key}
             href={`/admin/editor?date=${d.key}`}
-            className="grid grid-cols-[120px_1fr_auto] items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-accent-pink/40 transition-colors"
+            className="grid grid-cols-[100px_1fr_auto] sm:grid-cols-[120px_1fr_auto] items-center gap-3 px-3 sm:px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-accent-pink/40 transition-colors"
           >
             <span className="font-bold text-sm text-white">{d.label}</span>
             <span className="text-sm text-white/50 truncate">

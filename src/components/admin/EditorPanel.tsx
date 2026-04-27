@@ -136,9 +136,9 @@ export default function EditorPanel() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-6 max-w-4xl">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6 max-w-4xl">
       {/* Date nav */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         <button onClick={() => shiftDate(-1)} className="nav-btn" aria-label="Previous day">
           ←
         </button>

@@ -51,16 +51,16 @@ export default function SignupsPanel() {
   const unsubscribed = contacts?.filter((c) => c.unsubscribed) ?? [];
 
   return (
-    <div className="px-8 py-6 max-w-4xl space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="grid grid-cols-2 gap-4 flex-1">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-4xl space-y-5 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 flex-1">
           <Stat label="Subscribed" value={subscribed.length} highlight />
           <Stat label="Unsubscribed" value={unsubscribed.length} />
         </div>
         <button
           onClick={load}
           disabled={loading}
-          className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors disabled:opacity-50"
+          className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors disabled:opacity-50 self-start sm:self-auto"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
@@ -79,8 +79,8 @@ export default function SignupsPanel() {
       )}
 
       {contacts && contacts.length > 0 && (
-        <div className="rounded-2xl border border-white/10 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-2xl border border-white/10 overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead className="bg-white/[0.04]">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold text-white/60 text-xs uppercase tracking-wider">

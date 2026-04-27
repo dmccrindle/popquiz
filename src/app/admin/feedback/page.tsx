@@ -7,7 +7,7 @@ export default function FeedbackPage() {
         title="Feedback"
         subtitle="Submissions from the /feedback form."
       />
-      <div className="px-8 py-6 max-w-3xl">
+      <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-3xl">
         <div className="rounded-2xl border border-dashed border-white/10 p-8 space-y-3">
           <h2 className="text-base font-bold text-white">Storage not yet enabled</h2>
           <p className="text-sm text-white/60 leading-relaxed">

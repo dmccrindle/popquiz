@@ -16,9 +16,7 @@ const navSections: { label: string; items: { label: string; href: string; icon: 
   },
   {
     label: "Content",
-    items: [
-      { label: "Daily Brief", href: "/admin/brief", icon: "✦" },
-    ],
+    items: [{ label: "Daily Brief", href: "/admin/brief", icon: "✦" }],
   },
   {
     label: "Site",
@@ -29,19 +27,43 @@ const navSections: { label: string; items: { label: string; href: string; icon: 
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({
+  mobileOpen,
+  onClose,
+}: {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const { user, signOutAdmin } = useAdminAuth();
 
   return (
-    <aside className="w-64 shrink-0 bg-white/[0.02] border-r border-white/5 flex flex-col">
-      <div className="p-6 border-b border-white/5">
+    <aside
+      className={`w-64 shrink-0 bg-[#0c0c20] border-r border-white/5 flex flex-col fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200 ease-out ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      }`}
+    >
+      <div className="p-6 border-b border-white/5 flex items-center justify-between">
         <Link href="/admin" className="flex items-center gap-2">
           <span className="text-lg font-extrabold bg-gradient-to-r from-accent-pink to-accent-purple bg-clip-text text-transparent">
             Pop Quiz
           </span>
-          <span className="text-xs text-white/40 font-semibold tracking-wider uppercase mt-0.5">Admin</span>
+          <span className="text-xs text-white/40 font-semibold tracking-wider uppercase mt-0.5">
+            Admin
+          </span>
         </Link>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1 -mr-1 text-white/50 hover:text-white"
+            aria-label="Close menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4">

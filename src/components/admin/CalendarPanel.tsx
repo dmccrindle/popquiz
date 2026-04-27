@@ -42,7 +42,7 @@ export default function CalendarPanel() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-6 max-w-3xl">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6 max-w-3xl">
       <div className="flex items-center justify-center gap-4">
         <button onClick={() => shiftMonth(-1)} className="nav-btn" aria-label="Previous month">
           ←
