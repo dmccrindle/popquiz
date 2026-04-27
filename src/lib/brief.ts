@@ -66,12 +66,11 @@ export async function generateBrief(): Promise<Brief> {
     max_tokens: 16000,
     thinking: { type: "adaptive" },
     output_config: { format: zodOutputFormat(BriefSchema) },
-    tools: [{ type: "web_search_20260209", name: "web_search" }],
     system: [
       "You are the editorial brain for Pop Quiz Party — a music trivia party game's social channels.",
       "You produce two things each day:",
       "  (1) `items`: 5 newsworthy music moments ripe for social posts — mix anniversaries (album/song birthdays, milestone gigs), artists in the news, beef/awards/charts moments, fun trivia ties.",
-      "  (2) `releases`: 3-10 notable upcoming single/album/EP releases — this week and the next ~3 weeks. Use web_search to verify release dates from credible sources (Pitchfork, Stereogum, Consequence, NME, Billboard, artist-official announcements). Include only dates today or later.",
+      "  (2) `releases`: 3-10 notable single/album/EP releases — this week and the next ~3 weeks. Use only releases you are confident about from your training data; lean toward big-name artists, confirmed announcements, and well-publicized release calendars. Include only dates today or later.",
       "Skip generic celebrity gossip. Skip anything that wouldn't land with a music-savvy audience.",
       "Each suggested_post should sound like it was written by a music fan, not a marketer. Keep them short and shareable.",
       "Each release angle is one sharp sentence on why fans should care.",
@@ -79,7 +78,7 @@ export async function generateBrief(): Promise<Brief> {
     messages: [
       {
         role: "user",
-        content: `Today is ${dateStr} (${todayKey()}). Use web_search to find: (a) anniversaries/news for today, and (b) confirmed upcoming music releases between now and ~3 weeks out. Return both sections in the schema. Make every item specific — concrete artist names, titles, dates.`,
+        content: `Today is ${dateStr} (${todayKey()}). Give me both sections: (a) 5 anniversaries/news moments for today, and (b) 3-10 notable upcoming releases between now and ~3 weeks out. Make every item specific — concrete artist names, titles, dates.`,
       },
     ],
   });

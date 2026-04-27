@@ -5,6 +5,7 @@ import { fetchBrief, generateBrief, saveBrief, todayKey } from "@/lib/brief";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 export async function GET(request: Request) {
   const auth = await verifyAdminRequest(request);

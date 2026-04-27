@@ -4,6 +4,7 @@ import { generateBrief, saveBrief } from "@/lib/brief";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
