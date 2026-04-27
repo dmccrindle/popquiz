@@ -10,10 +10,19 @@ type BriefItem = {
   suggested_post: string;
 };
 
+type ReleaseItem = {
+  date: string;
+  artist: string;
+  title: string;
+  type: "single" | "album" | "EP";
+  angle: string;
+};
+
 type Brief = {
   dateKey: string;
   generatedAt: string;
   items: BriefItem[];
+  releases?: ReleaseItem[];
 };
 
 export default function BriefPanel() {
@@ -116,41 +125,120 @@ export default function BriefPanel() {
       )}
 
       {brief && (
-        <div className="space-y-4">
-          {brief.items.map((item, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-white leading-tight">
-                    {item.headline}
-                  </h3>
-                  <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                    {item.angle}
-                  </p>
+        <div className="space-y-8">
+          <section className="space-y-4">
+            <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
+              Today&apos;s moments
+            </h2>
+            {brief.items.map((item, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white leading-tight">
+                      {item.headline}
+                    </h3>
+                    <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                      {item.angle}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-accent-pink uppercase tracking-wider px-2 py-1 bg-accent-pink/10 rounded-full shrink-0">
+                    #{i + 1}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-accent-pink uppercase tracking-wider px-2 py-1 bg-accent-pink/10 rounded-full">
-                  #{i + 1}
-                </span>
+                <div className="flex items-start gap-3 pt-2 border-t border-white/5">
+                  <p className="text-sm text-white/85 leading-relaxed flex-1">
+                    &ldquo;{item.suggested_post}&rdquo;
+                  </p>
+                  <button
+                    onClick={() => copy(item.suggested_post)}
+                    className="shrink-0 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                    aria-label="Copy post to clipboard"
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
-              <div className="flex items-start gap-3 pt-2 border-t border-white/5">
-                <p className="text-sm text-white/85 leading-relaxed flex-1">
-                  &ldquo;{item.suggested_post}&rdquo;
-                </p>
+            ))}
+          </section>
+
+          {brief.releases && brief.releases.length > 0 && (
+            <ReleaseWatch releases={brief.releases} onCopy={copy} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatReleaseDate(iso: string): { label: string; isThisWeek: boolean; isPast: boolean } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const release = new Date(iso + "T12:00:00");
+  if (Number.isNaN(release.getTime())) {
+    return { label: iso, isThisWeek: false, isPast: false };
+  }
+  const diffDays = Math.round((release.getTime() - today.getTime()) / 86_400_000);
+  const label = release.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return { label, isThisWeek: diffDays >= 0 && diffDays <= 6, isPast: diffDays < 0 };
+}
+
+function ReleaseWatch({
+  releases,
+  onCopy,
+}: {
+  releases: ReleaseItem[];
+  onCopy: (text: string) => void;
+}) {
+  const sorted = [...releases].sort((a, b) => a.date.localeCompare(b.date));
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
+        Release watch
+      </h2>
+      <div className="space-y-2">
+        {sorted.map((r, i) => {
+          const { label, isThisWeek, isPast } = formatReleaseDate(r.date);
+          return (
+            <div
+              key={`${r.date}-${r.artist}-${i}`}
+              className={`rounded-2xl border bg-white/[0.03] p-4 sm:p-5 space-y-2 ${
+                isPast ? "border-white/5 opacity-60" : "border-white/10"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                      {r.type}
+                    </span>
+                    {isThisWeek && !isPast && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-pink/20 text-accent-pink">
+                        This week
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base font-bold text-white leading-tight">
+                    {r.artist} — <span className="text-white/85">{r.title}</span>
+                  </h3>
+                  <p className="text-xs text-white/50 mt-0.5">{label}</p>
+                </div>
                 <button
-                  onClick={() => copy(item.suggested_post)}
+                  onClick={() =>
+                    onCopy(`${r.artist} — ${r.title} (${label}). ${r.angle}`)
+                  }
                   className="shrink-0 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
-                  aria-label="Copy post to clipboard"
                 >
                   Copy
                 </button>
               </div>
+              <p className="text-sm text-white/75 leading-relaxed">{r.angle}</p>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
