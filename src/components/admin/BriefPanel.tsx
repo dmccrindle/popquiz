@@ -8,6 +8,7 @@ type BriefItem = {
   headline: string;
   angle: string;
   suggested_post: string;
+  hashtags?: string[];
 };
 
 type ReleaseItem = {
@@ -145,12 +146,12 @@ export default function BriefPanel() {
       )}
 
       {brief && (
-        <div className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
               Today&apos;s moments
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {editedItems.map((item, i) => (
                 <div
                   key={i}
@@ -186,6 +187,29 @@ export default function BriefPanel() {
                       Copy
                     </button>
                   </div>
+                  {item.hashtags && item.hashtags.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                        Tags
+                      </span>
+                      {item.hashtags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-xs text-white/60 bg-white/5 px-2 py-0.5 rounded-full"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      <button
+                        onClick={() =>
+                          copy((item.hashtags ?? []).map((t) => `#${t}`).join(" "))
+                        }
+                        className="ml-auto text-[10px] font-semibold text-white/50 hover:text-white transition-colors"
+                      >
+                        Copy tags
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -196,7 +220,7 @@ export default function BriefPanel() {
               <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
                 Release watch
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {[...editedReleases]
                   .map((r, originalIdx) => ({ r, originalIdx }))
                   .sort((a, b) => a.r.date.localeCompare(b.r.date))

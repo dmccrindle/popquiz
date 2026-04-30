@@ -11,7 +11,14 @@ const BriefItemSchema = z.object({
   suggested_post: z
     .string()
     .describe(
-      "A ready-to-paste social post (Instagram/TikTok caption length, ~120-200 chars). Voice: playful, music-fan energy, no hashtag soup."
+      "A ready-to-paste social post (Instagram/TikTok caption length, ~120-200 chars). MUST include the relevant artist or band name explicitly. Voice rules in the system prompt apply."
+    ),
+  hashtags: z
+    .array(z.string())
+    .min(3)
+    .max(5)
+    .describe(
+      "3-5 hashtags relevant to this specific moment. NO # prefix in the strings. Lowercase, no spaces. Mix specific (artist/album) and broader (genre/era). Avoid generic spam tags like #music."
     ),
 });
 
@@ -73,7 +80,9 @@ export async function generateBrief(): Promise<Brief> {
       "  (2) `releases`: 3-10 notable single/album/EP releases — this week and the next ~3 weeks. Use only releases you are confident about from your training data; lean toward big-name artists, confirmed announcements, and well-publicized release calendars. Include only dates today or later.",
       "VOICE: knowledgeable friend who loves music. Drop a fact and a feeling. Assume the reader already cares — no need to convince them.",
       "DO write: specific concrete details (album titles, dates, session anecdotes, chart positions, lyric callouts that aren't dunks). Treat readers as peers.",
-      "DO NOT write: engagement bait ('we'll wait', 'name one'), 'fans are FREAKING OUT', 'the internet can't handle', performative challenges, 'iconic', 'queen/king behavior', exclamation points, hashtag soup, marketing-deck phrases like 'cultural moment'.",
+      "DO NOT write: engagement bait ('we'll wait', 'name one'), 'fans are FREAKING OUT', 'the internet can't handle', performative challenges, 'iconic', 'queen/king behavior', exclamation points, marketing-deck phrases like 'cultural moment'.",
+      "Every suggested_post MUST mention the relevant artist/band name by name (e.g. 'Black Crowes', 'Springsteen'). Don't bury who it's about.",
+      "Hashtags belong only in the `hashtags` array, never inline in suggested_post.",
       "Skip generic celebrity gossip. Skip anything that wouldn't land with a music-savvy audience.",
       "Each suggested_post is 1-2 sentences. Read like something a knowledgeable friend would text you, not something a brand would post. No setup-punchline structure.",
       "Each release angle is one sharp sentence on why fans should care — same voice rules.",
