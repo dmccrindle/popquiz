@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import DeviceFeature from "@/components/DeviceFeature";
 import HowToPlay from "@/components/HowToPlay";
+import AppDemos from "@/components/AppDemos";
 import Sabotage from "@/components/Sabotage";
 import MusicSelection from "@/components/MusicSelection";
 import DailyTrivia from "@/components/DailyTrivia";
@@ -18,6 +19,8 @@ export default function Home() {
         <DeviceFeature />
 
         <HowToPlay />
+
+        <AppDemos />
 
         <Sabotage />
 
