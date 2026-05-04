@@ -53,6 +53,7 @@ export default function AppDemos() {
   const [shouldPlay, setShouldPlay] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const videoBoxRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -73,6 +74,13 @@ export default function AppDemos() {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!shouldPlay) return;
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
+  }, [shouldPlay, activeId]);
 
   function handleSelect(id: string) {
     setActiveId(id);
@@ -99,6 +107,7 @@ export default function AppDemos() {
           >
             <div className="relative rounded-3xl overflow-hidden bg-black border border-white/10 mx-auto max-w-sm lg:max-w-md aspect-[3/4]">
               <video
+                ref={videoRef}
                 key={active.src}
                 src={active.src}
                 autoPlay={shouldPlay}
