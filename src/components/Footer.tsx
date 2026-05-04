@@ -16,6 +16,9 @@ export default function Footer() {
           </a>
         </p>
         <div className="flex items-center gap-4">
+          <Link href="/press" className="text-xs text-white/50 hover:text-white/80 transition-colors">
+            Press
+          </Link>
           <Link href="/feedback" className="text-xs text-white/50 hover:text-white/80 transition-colors">
             Feedback
           </Link>
