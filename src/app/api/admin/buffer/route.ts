@@ -72,6 +72,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ configured: false, profiles: [] });
   }
 
+  // Schema-probe mode: /api/admin/buffer?probe=PostInputMetaData,SomeOtherType
+  const probe = new URL(request.url).searchParams.get("probe");
+  if (probe) {
+    const names = probe
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const entries = await Promise.all(
+      names.map(async (n) => [n, await describeType(token, n)] as const)
+    );
+    return NextResponse.json(Object.fromEntries(entries));
+  }
+
   const { data, error } = await bufferGraphQL<ChannelsData>(
     token,
     `query Channels {
