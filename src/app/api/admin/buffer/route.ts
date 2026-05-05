@@ -4,11 +4,57 @@ import { verifyAdminRequest } from "@/lib/admin-token";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Body = {
-  text: string;
-  profileIds: string[];
-  // unix seconds
-  scheduledAt: number;
+const GRAPHQL_ENDPOINT = "https://api.buffer.com/graphql";
+
+type GqlResponse<T> = {
+  data?: T;
+  errors?: Array<{ message: string }>;
+};
+
+async function bufferGraphQL<T>(
+  token: string,
+  query: string,
+  variables?: Record<string, unknown>
+): Promise<{ data?: T; error?: string; status: number }> {
+  let res: Response;
+  try {
+    res = await fetch(GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+  } catch (e) {
+    return {
+      error: e instanceof Error ? e.message : "Network error",
+      status: 502,
+    };
+  }
+
+  const body = (await res.json().catch(() => ({}))) as GqlResponse<T>;
+  if (!res.ok) {
+    return {
+      error:
+        body.errors?.[0]?.message ||
+        `Buffer ${res.status}${res.statusText ? ` ${res.statusText}` : ""}`,
+      status: res.status,
+    };
+  }
+  if (body.errors?.length) {
+    return { error: body.errors.map((e) => e.message).join("; "), status: 400 };
+  }
+  return { data: body.data, status: 200 };
+}
+
+type ChannelsData = {
+  channels?: Array<{
+    id: string;
+    service?: string;
+    name?: string;
+    serviceUsername?: string;
+  }>;
 };
 
 export async function GET(request: Request) {
@@ -22,47 +68,45 @@ export async function GET(request: Request) {
     return NextResponse.json({ configured: false, profiles: [] });
   }
 
-  try {
-    const res = await fetch(
-      `https://api.bufferapp.com/1/profiles.json?access_token=${encodeURIComponent(token)}`,
-      { method: "GET" }
-    );
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { message?: string };
-      return NextResponse.json(
-        {
-          configured: true,
-          profiles: [],
-          error: data.message || `Buffer ${res.status}`,
-        },
-        { status: 200 }
-      );
-    }
-    const list = (await res.json()) as Array<{
-      id: string;
-      service: string;
-      service_username?: string;
-      formatted_username?: string;
-    }>;
+  const { data, error } = await bufferGraphQL<ChannelsData>(
+    token,
+    `query Channels {
+      channels {
+        id
+        service
+        name
+        serviceUsername
+      }
+    }`
+  );
 
-    const profiles = list.map((p) => ({
-      id: p.id,
-      service: p.service,
-      username: p.formatted_username || p.service_username || "",
-    }));
-
-    return NextResponse.json({ configured: true, profiles });
-  } catch (e) {
-    return NextResponse.json(
-      {
-        configured: true,
-        profiles: [],
-        error: e instanceof Error ? e.message : "Buffer profiles fetch failed",
-      },
-      { status: 200 }
-    );
+  if (error || !data?.channels) {
+    return NextResponse.json({
+      configured: true,
+      profiles: [],
+      error: error || "Buffer returned no channels",
+    });
   }
+
+  const profiles = data.channels.map((c) => ({
+    id: c.id,
+    service: (c.service ?? "").toLowerCase(),
+    username: c.serviceUsername || c.name || "",
+  }));
+
+  return NextResponse.json({ configured: true, profiles });
 }
+
+type Body = {
+  text: string;
+  profileIds: string[];
+  // unix seconds
+  scheduledAt: number;
+};
+
+type CreatePostsData = {
+  createPosts?: { success?: boolean; message?: string };
+};
 
 export async function POST(request: Request) {
   const auth = await verifyAdminRequest(request);
@@ -91,7 +135,7 @@ export async function POST(request: Request) {
   }
   if (!Array.isArray(profileIds) || profileIds.length === 0) {
     return NextResponse.json(
-      { error: "Pick at least one profile." },
+      { error: "Pick at least one channel." },
       { status: 400 }
     );
   }
@@ -99,43 +143,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing scheduledAt." }, { status: 400 });
   }
 
-  // Buffer Classic API: POST /1/updates/create.json
-  // Body must be form-encoded.
-  const params = new URLSearchParams();
-  params.append("text", text);
-  params.append("scheduled_at", String(scheduledAt));
-  for (const id of profileIds) params.append("profile_ids[]", id);
+  // Buffer GraphQL expects ISO 8601 strings for DateTime fields.
+  const scheduledIso = new Date(scheduledAt * 1000).toISOString();
 
-  let res: Response;
-  try {
-    res = await fetch(
-      `https://api.bufferapp.com/1/updates/create.json?access_token=${encodeURIComponent(token)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
+  const { data, error, status } = await bufferGraphQL<CreatePostsData>(
+    token,
+    `mutation CreatePosts($input: CreatePostsInput!) {
+      createPosts(input: $input) {
+        success
+        message
       }
-    );
-  } catch (e) {
+    }`,
+    {
+      input: {
+        channels: profileIds.map((id) => ({ id })),
+        text,
+        scheduledAt: scheduledIso,
+      },
+    }
+  );
+
+  if (error) {
+    return NextResponse.json({ error }, { status });
+  }
+  if (data?.createPosts?.success === false) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Buffer request failed" },
-      { status: 502 }
+      { error: data.createPosts.message || "Buffer rejected the post." },
+      { status: 400 }
     );
   }
 
-  const data = (await res.json().catch(() => ({}))) as {
-    success?: boolean;
-    message?: string;
-    code?: number;
-    updates?: Array<{ id: string; profile_id: string; profile_service: string }>;
-  };
-
-  if (!res.ok || data.success === false) {
-    return NextResponse.json(
-      { error: data.message || `Buffer ${res.status}` },
-      { status: res.status === 200 ? 502 : res.status }
-    );
-  }
-
-  return NextResponse.json({ ok: true, updates: data.updates ?? [] });
+  return NextResponse.json({ ok: true });
 }
