@@ -27,6 +27,13 @@ type Brief = {
   releases?: ReleaseItem[];
 };
 
+type PromoSet = {
+  generatedAt: string;
+  items: BriefItem[];
+};
+
+const PROMOS_KEY = "promos";
+
 function localDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -53,8 +60,12 @@ export default function BriefPanel() {
   const [tomorrowKey, setTomorrowKey] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
 
+  const [promos, setPromos] = useState<PromoSet | null>(null);
+
   const [editedItems, setEditedItems] = useState<BriefItem[]>([]);
   const [editedReleases, setEditedReleases] = useState<ReleaseItem[]>([]);
+
+  const isPromos = selectedKey === PROMOS_KEY;
 
   const [bufferProfiles, setBufferProfiles] = useState<BufferProfile[]>([]);
   const [bufferConfigured, setBufferConfigured] = useState(false);
@@ -72,26 +83,43 @@ export default function BriefPanel() {
   }, []);
 
   useEffect(() => {
-    setEditedItems(brief?.items ?? []);
-    setEditedReleases(brief?.releases ?? []);
-  }, [brief]);
+    if (isPromos) {
+      setEditedItems(promos?.items ?? []);
+      setEditedReleases([]);
+    } else {
+      setEditedItems(brief?.items ?? []);
+      setEditedReleases(brief?.releases ?? []);
+    }
+  }, [brief, promos, isPromos]);
 
   const load = useCallback(
-    async (dateKey: string) => {
-      if (!user || !dateKey) return;
+    async (key: string) => {
+      if (!user || !key) return;
       setLoading(true);
       try {
         const token = await user.getIdToken();
-        const res = await fetch(
-          `/api/admin/brief?date=${encodeURIComponent(dateKey)}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || `${res.status}`);
+        if (key === PROMOS_KEY) {
+          const res = await fetch("/api/admin/promos", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || `${res.status}`);
+          }
+          const data = (await res.json()) as { promos: PromoSet | null };
+          setPromos(data.promos);
+        } else {
+          const res = await fetch(
+            `/api/admin/brief?date=${encodeURIComponent(key)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || `${res.status}`);
+          }
+          const data = (await res.json()) as { brief: Brief | null };
+          setBrief(data.brief);
         }
-        const data = (await res.json()) as { brief: Brief | null };
-        setBrief(data.brief);
       } catch (e) {
         toast(`Load failed: ${e instanceof Error ? e.message : "unknown"}`, true);
       } finally {
@@ -106,21 +134,35 @@ export default function BriefPanel() {
     setGenerating(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch("/api/admin/brief", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ date: selectedKey }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `${res.status}`);
+      if (selectedKey === PROMOS_KEY) {
+        const res = await fetch("/api/admin/promos", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `${res.status}`);
+        }
+        const data = (await res.json()) as { promos: PromoSet };
+        setPromos(data.promos);
+        toast("Promos generated");
+      } else {
+        const res = await fetch("/api/admin/brief", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ date: selectedKey }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `${res.status}`);
+        }
+        const data = (await res.json()) as { brief: Brief };
+        setBrief(data.brief);
+        toast("Brief generated");
       }
-      const data = (await res.json()) as { brief: Brief };
-      setBrief(data.brief);
-      toast("Brief generated");
     } catch (e) {
       toast(`Failed: ${e instanceof Error ? e.message : "unknown"}`, true);
     } finally {
@@ -149,17 +191,6 @@ export default function BriefPanel() {
         setBufferConfigured(data.configured);
         setBufferProfiles(data.profiles);
         setBufferError(data.error ?? null);
-
-        // One-shot schema probe so we can map the mention/tag fields.
-        const probeRes = await fetch(
-          "/api/admin/buffer?probe=ThreadsPostMetadataInput,TwitterPostMetadataInput,BlueskyPostMetadataInput,InstagramPostMetadataInput,TikTokPostMetadataInput,FacebookPostMetadataInput,LinkedInPostMetadataInput",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (probeRes.ok) {
-          const probe = await probeRes.json();
-          // eslint-disable-next-line no-console
-          console.log("[Buffer platform metadata]", JSON.stringify(probe, null, 2));
-        }
       } catch {
         // ignore — Buffer is optional
       }
@@ -199,6 +230,7 @@ export default function BriefPanel() {
       label: "Tomorrow",
       date: tomorrowKey ? shortDate(tomorrowKey) : "",
     },
+    { key: PROMOS_KEY, label: "Promos", date: "" },
   ];
 
   return (
@@ -232,35 +264,60 @@ export default function BriefPanel() {
         })}
       </div>
 
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          {brief ? (
-            <p className="text-sm text-white/50">
-              Generated{" "}
-              <span className="text-white/80">
-                {new Date(brief.generatedAt).toLocaleString()}
-              </span>
-            </p>
-          ) : (
-            <p className="text-sm text-white/50">
-              {loading ? "Loading…" : "No brief for this day yet."}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={generate}
-          disabled={generating || loading}
-          className="px-5 py-2.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {generating ? "Generating…" : brief ? "Regenerate" : "Generate brief"}
-        </button>
-      </div>
+      {(() => {
+        const current = isPromos ? promos : brief;
+        const hasContent = !!current;
+        return (
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              {current ? (
+                <p className="text-sm text-white/50">
+                  Generated{" "}
+                  <span className="text-white/80">
+                    {new Date(current.generatedAt).toLocaleString()}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm text-white/50">
+                  {loading
+                    ? "Loading…"
+                    : isPromos
+                    ? "No evergreen promos yet."
+                    : "No brief for this day yet."}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={generate}
+              disabled={generating || loading}
+              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {generating
+                ? "Generating…"
+                : hasContent
+                ? "Regenerate"
+                : isPromos
+                ? "Generate promos"
+                : "Generate brief"}
+            </button>
+          </div>
+        );
+      })()}
 
-      {!brief && !loading && (
+      {!brief && !loading && !isPromos && (
         <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center">
           <p className="text-sm text-white/40">
             5 music moments — anniversaries, releases, news cycle — with ready-to-paste
             social posts. Cron generates one each morning at 7am ET, or generate manually here.
+          </p>
+        </div>
+      )}
+
+      {!promos && !loading && isPromos && (
+        <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center">
+          <p className="text-sm text-white/40">
+            10 evergreen promo posts that mention Pop Quiz Music and link to the App
+            Store — schedule them anytime. Generate once and reuse.
           </p>
         </div>
       )}
@@ -274,7 +331,7 @@ export default function BriefPanel() {
         error={bufferError}
       />
 
-      {brief && (
+      {brief && !isPromos && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
@@ -425,6 +482,84 @@ export default function BriefPanel() {
             </section>
           )}
         </div>
+      )}
+
+      {promos && isPromos && (
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
+            Evergreen promos · {editedItems.length} posts
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            {editedItems.map((item, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 space-y-3 flex flex-col"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-white leading-tight">
+                      {item.headline}
+                    </h3>
+                    <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                      {item.angle}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-accent-pink uppercase tracking-wider px-2 py-1 bg-accent-pink/10 rounded-full shrink-0">
+                    #{i + 1}
+                  </span>
+                </div>
+                <textarea
+                  value={item.suggested_post}
+                  onChange={(e) => updateItemPost(i, e.target.value)}
+                  rows={4}
+                  className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white/85 leading-relaxed resize-y focus:outline-none focus:border-accent-pink/50"
+                />
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="text-[10px] text-white/30">
+                    {item.suggested_post.length} chars
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => copy(item.suggested_post)}
+                      className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={() => openBuffer(item.suggested_post)}
+                      className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                    >
+                      Schedule
+                    </button>
+                  </div>
+                </div>
+                {item.hashtags && item.hashtags.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                      Tags
+                    </span>
+                    {item.hashtags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-xs text-white/60 bg-white/5 px-2 py-0.5 rounded-full"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                    <button
+                      onClick={() =>
+                        copy((item.hashtags ?? []).map((t) => `#${t}`).join(" "))
+                      }
+                      className="ml-auto text-[10px] font-semibold text-white/50 hover:text-white transition-colors"
+                    >
+                      Copy tags
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
