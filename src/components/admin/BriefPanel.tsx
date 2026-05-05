@@ -149,6 +149,17 @@ export default function BriefPanel() {
         setBufferConfigured(data.configured);
         setBufferProfiles(data.profiles);
         setBufferError(data.error ?? null);
+
+        // One-shot schema probe so we can map the mention/tag fields.
+        const probeRes = await fetch(
+          "/api/admin/buffer?probe=PostInputMetaData,PostInputMetaDataInput,PostMetadata,Mention,Tag,TagInput,MentionInput,TwitterMetadata,ThreadsMetadata,BlueskyMetadata",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (probeRes.ok) {
+          const probe = await probeRes.json();
+          // eslint-disable-next-line no-console
+          console.log("[Buffer schema probe]", probe);
+        }
       } catch {
         // ignore — Buffer is optional
       }
