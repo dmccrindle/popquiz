@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAdminAuth } from "./AdminAuthGate";
 import { useToast } from "./Toast";
+import BufferModal, { type BufferProfile } from "./BufferModal";
 
 type BriefItem = {
   headline: string;
@@ -26,6 +27,21 @@ type Brief = {
   releases?: ReleaseItem[];
 };
 
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function shortDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function BriefPanel() {
   const { user } = useAdminAuth();
   const { toast } = useToast();
@@ -33,43 +49,69 @@ export default function BriefPanel() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
+  const [todayKey, setTodayKey] = useState("");
+  const [tomorrowKey, setTomorrowKey] = useState("");
+  const [selectedKey, setSelectedKey] = useState("");
+
   const [editedItems, setEditedItems] = useState<BriefItem[]>([]);
   const [editedReleases, setEditedReleases] = useState<ReleaseItem[]>([]);
+
+  const [bufferProfiles, setBufferProfiles] = useState<BufferProfile[]>([]);
+  const [bufferConfigured, setBufferConfigured] = useState(false);
+  const [bufferOpen, setBufferOpen] = useState(false);
+  const [bufferText, setBufferText] = useState("");
+
+  // Compute date keys client-side in the user's local timezone
+  useEffect(() => {
+    const t = localDateKey(new Date());
+    const tm = localDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    setTodayKey(t);
+    setTomorrowKey(tm);
+    setSelectedKey(t);
+  }, []);
 
   useEffect(() => {
     setEditedItems(brief?.items ?? []);
     setEditedReleases(brief?.releases ?? []);
   }, [brief]);
 
-  const load = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const token = await user.getIdToken();
-      const res = await fetch("/api/admin/brief", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `${res.status}`);
+  const load = useCallback(
+    async (dateKey: string) => {
+      if (!user || !dateKey) return;
+      setLoading(true);
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `/api/admin/brief?date=${encodeURIComponent(dateKey)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `${res.status}`);
+        }
+        const data = (await res.json()) as { brief: Brief | null };
+        setBrief(data.brief);
+      } catch (e) {
+        toast(`Load failed: ${e instanceof Error ? e.message : "unknown"}`, true);
+      } finally {
+        setLoading(false);
       }
-      const data = (await res.json()) as { brief: Brief | null };
-      setBrief(data.brief);
-    } catch (e) {
-      toast(`Load failed: ${e instanceof Error ? e.message : "unknown"}`, true);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, toast]);
+    },
+    [user, toast]
+  );
 
   const generate = useCallback(async () => {
-    if (!user) return;
+    if (!user || !selectedKey) return;
     setGenerating(true);
     try {
       const token = await user.getIdToken();
       const res = await fetch("/api/admin/brief", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ date: selectedKey }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -83,11 +125,37 @@ export default function BriefPanel() {
     } finally {
       setGenerating(false);
     }
-  }, [user, toast]);
+  }, [user, toast, selectedKey]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (selectedKey) load(selectedKey);
+  }, [load, selectedKey]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch("/api/admin/buffer", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          configured: boolean;
+          profiles: BufferProfile[];
+        };
+        setBufferConfigured(data.configured);
+        setBufferProfiles(data.profiles);
+      } catch {
+        // ignore — Buffer is optional
+      }
+    })();
+  }, [user]);
+
+  function openBuffer(text: string) {
+    setBufferText(text);
+    setBufferOpen(true);
+  }
 
   async function copy(text: string) {
     try {
@@ -110,8 +178,46 @@ export default function BriefPanel() {
     );
   }
 
+  const tabs = [
+    { key: todayKey, label: "Today", date: todayKey ? shortDate(todayKey) : "" },
+    {
+      key: tomorrowKey,
+      label: "Tomorrow",
+      date: tomorrowKey ? shortDate(tomorrowKey) : "",
+    },
+  ];
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-6xl space-y-5 sm:space-y-6">
+      {/* Today / Tomorrow tabs */}
+      <div className="flex items-center gap-2">
+        {tabs.map((t) => {
+          const isActive = t.key === selectedKey;
+          return (
+            <button
+              key={t.label}
+              onClick={() => setSelectedKey(t.key)}
+              disabled={!t.key}
+              aria-pressed={isActive}
+              className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+                isActive
+                  ? "border-accent-pink/60 bg-gradient-to-r from-accent-pink/15 to-accent-purple/15 text-white"
+                  : "border-white/10 text-white/60 hover:text-white hover:border-white/30"
+              }`}
+            >
+              {t.label}
+              <span
+                className={`ml-2 text-xs ${
+                  isActive ? "text-white/70" : "text-white/40"
+                }`}
+              >
+                {t.date}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           {brief ? (
@@ -123,7 +229,7 @@ export default function BriefPanel() {
             </p>
           ) : (
             <p className="text-sm text-white/50">
-              {loading ? "Loading…" : "No brief for today yet."}
+              {loading ? "Loading…" : "No brief for this day yet."}
             </p>
           )}
         </div>
@@ -145,11 +251,19 @@ export default function BriefPanel() {
         </div>
       )}
 
+      <BufferModal
+        open={bufferOpen}
+        onClose={() => setBufferOpen(false)}
+        initialText={bufferText}
+        profiles={bufferProfiles}
+        configured={bufferConfigured}
+      />
+
       {brief && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-white/50 uppercase tracking-wider">
-              Today&apos;s moments
+              Moments for {shortDate(brief.dateKey)}
             </h2>
             <div className="space-y-4">
               {editedItems.map((item, i) => (
@@ -180,12 +294,20 @@ export default function BriefPanel() {
                     <span className="text-[10px] text-white/30">
                       {item.suggested_post.length} chars
                     </span>
-                    <button
-                      onClick={() => copy(item.suggested_post)}
-                      className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
-                    >
-                      Copy
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => copy(item.suggested_post)}
+                        className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => openBuffer(item.suggested_post)}
+                        className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                      >
+                        Schedule
+                      </button>
+                    </div>
                   </div>
                   {item.hashtags && item.hashtags.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
@@ -260,14 +382,26 @@ export default function BriefPanel() {
                           <span className="text-[10px] text-white/30">
                             {r.angle.length} chars
                           </span>
-                          <button
-                            onClick={() =>
-                              copy(`${r.artist} — ${r.title} (${label}). ${r.angle}`)
-                            }
-                            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
-                          >
-                            Copy
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                copy(`${r.artist} — ${r.title} (${label}). ${r.angle}`)
+                              }
+                              className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white/70 hover:text-white hover:border-white/30 transition-colors"
+                            >
+                              Copy
+                            </button>
+                            <button
+                              onClick={() =>
+                                openBuffer(
+                                  `${r.artist} — ${r.title} (${label}). ${r.angle}`
+                                )
+                              }
+                              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                            >
+                              Schedule
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

@@ -50,22 +50,46 @@ export type Brief = {
   releases: ReleaseItem[];
 };
 
-export function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+const BRIEF_TZ = "America/Chicago";
+
+function dateKeyInTz(d: Date, tz = BRIEF_TZ): string {
+  // en-CA gives YYYY-MM-DD output reliably with Intl
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
 }
 
-export async function generateBrief(): Promise<Brief> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY not configured.");
-  }
+export function todayKey(): string {
+  return dateKeyInTz(new Date());
+}
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("en-US", {
+export function tomorrowKey(): string {
+  return dateKeyInTz(new Date(Date.now() + 24 * 60 * 60 * 1000));
+}
+
+function prettyDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  // noon UTC keeps the printed weekday consistent regardless of timezone
+  const dt = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  return dt.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
+}
+
+export async function generateBrief(targetDateKey?: string): Promise<Brief> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY not configured.");
+  }
+
+  const dateKey = targetDateKey ?? todayKey();
+  const dateStr = prettyDate(dateKey);
 
   const client = new Anthropic();
   const response = await client.messages.parse({
@@ -77,7 +101,7 @@ export async function generateBrief(): Promise<Brief> {
       "You are the editorial brain for Pop Quiz Party — a music trivia party game's social channels.",
       "You produce two things each day:",
       "  (1) `items`: 5 newsworthy music moments ripe for social posts — mix anniversaries (album/song birthdays, milestone gigs), artists in the news, beef/awards/charts moments, fun trivia ties.",
-      "  (2) `releases`: 3-10 notable single/album/EP releases — this week and the next ~3 weeks. Use only releases you are confident about from your training data; lean toward big-name artists, confirmed announcements, and well-publicized release calendars. Include only dates today or later.",
+      "  (2) `releases`: 3-10 notable single/album/EP releases — this week and the next ~3 weeks. Use only releases you are confident about from your training data; lean toward big-name artists, confirmed announcements, and well-publicized release calendars. Include only dates on or after the target date.",
       "VOICE: knowledgeable friend who loves music. Drop a fact and a feeling. Assume the reader already cares — no need to convince them.",
       "DO write: specific concrete details (album titles, dates, session anecdotes, chart positions, lyric callouts that aren't dunks). Treat readers as peers.",
       "DO NOT write: engagement bait ('we'll wait', 'name one'), 'fans are FREAKING OUT', 'the internet can't handle', performative challenges, 'iconic', 'queen/king behavior', exclamation points, marketing-deck phrases like 'cultural moment'.",
@@ -90,13 +114,13 @@ export async function generateBrief(): Promise<Brief> {
     messages: [
       {
         role: "user",
-        content: `Today is ${dateStr} (${todayKey()}). Give me both sections: (a) 5 anniversaries/news moments for today, and (b) 3-10 notable upcoming releases between now and ~3 weeks out. Make every item specific — concrete artist names, titles, dates.`,
+        content: `Target date is ${dateStr} (${dateKey}). Anchor anniversaries and news moments to that exact date. Give me both sections: (a) 5 anniversaries/news moments for that day, and (b) 3-10 notable releases between that date and ~3 weeks out. Make every item specific — concrete artist names, titles, dates.`,
       },
     ],
   });
 
   return {
-    dateKey: todayKey(),
+    dateKey,
     generatedAt: new Date().toISOString(),
     items: response.parsed_output?.items ?? [],
     releases: response.parsed_output?.releases ?? [],
