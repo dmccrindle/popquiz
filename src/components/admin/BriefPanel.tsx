@@ -58,6 +58,7 @@ export default function BriefPanel() {
 
   const [bufferProfiles, setBufferProfiles] = useState<BufferProfile[]>([]);
   const [bufferConfigured, setBufferConfigured] = useState(false);
+  const [bufferError, setBufferError] = useState<string | null>(null);
   const [bufferOpen, setBufferOpen] = useState(false);
   const [bufferText, setBufferText] = useState("");
 
@@ -143,9 +144,11 @@ export default function BriefPanel() {
         const data = (await res.json()) as {
           configured: boolean;
           profiles: BufferProfile[];
+          error?: string;
         };
         setBufferConfigured(data.configured);
         setBufferProfiles(data.profiles);
+        setBufferError(data.error ?? null);
       } catch {
         // ignore — Buffer is optional
       }
@@ -257,6 +260,7 @@ export default function BriefPanel() {
         initialText={bufferText}
         profiles={bufferProfiles}
         configured={bufferConfigured}
+        error={bufferError}
       />
 
       {brief && (

@@ -39,12 +39,14 @@ export default function BufferModal({
   onClose,
   profiles,
   configured,
+  error,
 }: {
   open: boolean;
   initialText: string;
   onClose: () => void;
   profiles: BufferProfile[];
   configured: boolean;
+  error?: string | null;
 }) {
   const { user } = useAdminAuth();
   const { toast } = useToast();
@@ -166,6 +168,12 @@ export default function BufferModal({
           <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs text-amber-200">
             Buffer isn&apos;t configured. Set <code>BUFFER_ACCESS_TOKEN</code>{" "}
             in Vercel env vars and your connected channels will appear here.
+          </div>
+        )}
+
+        {configured && error && (
+          <div className="rounded-xl border border-red-400/40 bg-red-400/10 p-3 text-xs text-red-200 break-words">
+            <strong>Buffer API error:</strong> {error}
           </div>
         )}
 
