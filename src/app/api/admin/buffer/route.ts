@@ -49,11 +49,16 @@ async function bufferGraphQL<T>(
 }
 
 type ChannelsData = {
-  channels?: Array<{
-    id: string;
-    service?: string;
-    name?: string;
-  }>;
+  account?: {
+    currentOrganization?: {
+      id: string;
+      channels?: Array<{
+        id: string;
+        service?: string;
+        name?: string;
+      }>;
+    };
+  };
 };
 
 export async function GET(request: Request) {
@@ -70,15 +75,21 @@ export async function GET(request: Request) {
   const { data, error } = await bufferGraphQL<ChannelsData>(
     token,
     `query Channels {
-      channels {
-        id
-        service
-        name
+      account {
+        currentOrganization {
+          id
+          channels {
+            id
+            service
+            name
+          }
+        }
       }
     }`
   );
 
-  if (error || !data?.channels) {
+  const channels = data?.account?.currentOrganization?.channels;
+  if (error || !channels) {
     return NextResponse.json({
       configured: true,
       profiles: [],
@@ -86,7 +97,7 @@ export async function GET(request: Request) {
     });
   }
 
-  const profiles = data.channels.map((c) => ({
+  const profiles = channels.map((c) => ({
     id: c.id,
     service: (c.service ?? "").toLowerCase(),
     username: c.name || "",
