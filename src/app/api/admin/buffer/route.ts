@@ -256,7 +256,7 @@ export async function POST(request: Request) {
             text,
             dueAt: dueAtIso,
             schedulingType: "automatic",
-            mode: "schedule",
+            mode: "customScheduled",
           },
         }
       )
