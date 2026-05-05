@@ -114,8 +114,42 @@ type Body = {
 };
 
 type CreatePostData = {
-  createPost?: { success?: boolean; message?: string };
+  createPost?: { __typename?: string };
 };
+
+type TypeIntrospectionData = {
+  __type?: {
+    name?: string | null;
+    inputFields?: Array<{
+      name: string;
+      type?: { name?: string | null; ofType?: { name?: string | null } | null };
+    }>;
+    fields?: Array<{
+      name: string;
+      type?: { name?: string | null; ofType?: { name?: string | null } | null };
+    }>;
+  };
+};
+
+async function describeType(token: string, typeName: string): Promise<string> {
+  const { data } = await bufferGraphQL<TypeIntrospectionData>(
+    token,
+    `query Desc($n: String!) {
+      __type(name: $n) {
+        name
+        inputFields { name type { name ofType { name } } }
+        fields { name type { name ofType { name } } }
+      }
+    }`,
+    { n: typeName }
+  );
+  if (!data?.__type) return `${typeName} (not found)`;
+  const t = data.__type;
+  const fields = t.inputFields ?? t.fields ?? [];
+  return `${t.name} { ${fields
+    .map((f) => `${f.name}: ${f.type?.name ?? f.type?.ofType?.name ?? "?"}`)
+    .join(", ")} }`;
+}
 
 type IntrospectionData = {
   __schema?: {
@@ -201,12 +235,11 @@ export async function POST(request: Request) {
   // Buffer GraphQL expects ISO 8601 strings for DateTime fields.
   const scheduledIso = new Date(scheduledAt * 1000).toISOString();
 
-  const { data, error, status } = await bufferGraphQL<CreatePostData>(
+  const { error, status } = await bufferGraphQL<CreatePostData>(
     token,
     `mutation CreatePost($input: CreatePostInput!) {
       createPost(input: $input) {
-        success
-        message
+        __typename
       }
     }`,
     {
@@ -219,21 +252,21 @@ export async function POST(request: Request) {
   );
 
   if (error) {
-    // If the mutation name or input shape is wrong, surface available mutations.
-    if (/Unknown type|Cannot query field|Unknown argument/i.test(error)) {
-      const probe = await describeMutations(token);
+    // Schema mismatch — surface mutation list + relevant input/payload shapes.
+    if (/Unknown type|Cannot query field|Unknown argument|expected type/i.test(error)) {
+      const [muts, input, payload] = await Promise.all([
+        describeMutations(token),
+        describeType(token, "CreatePostInput"),
+        describeType(token, "PostActionPayload"),
+      ]);
       return NextResponse.json(
-        { error: `${error}\n\nAvailable mutations: ${probe}` },
+        {
+          error: `${error}\n\nAvailable mutations: ${muts}\n\nInput shape: ${input}\n\nPayload shape: ${payload}`,
+        },
         { status }
       );
     }
     return NextResponse.json({ error }, { status });
-  }
-  if (data?.createPost?.success === false) {
-    return NextResponse.json(
-      { error: data.createPost.message || "Buffer rejected the post." },
-      { status: 400 }
-    );
   }
 
   return NextResponse.json({ ok: true });
