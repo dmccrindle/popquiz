@@ -53,7 +53,6 @@ type ChannelsData = {
     id: string;
     service?: string;
     name?: string;
-    serviceUsername?: string;
   }>;
 };
 
@@ -75,7 +74,6 @@ export async function GET(request: Request) {
         id
         service
         name
-        serviceUsername
       }
     }`
   );
@@ -91,7 +89,7 @@ export async function GET(request: Request) {
   const profiles = data.channels.map((c) => ({
     id: c.id,
     service: (c.service ?? "").toLowerCase(),
-    username: c.serviceUsername || c.name || "",
+    username: c.name || "",
   }));
 
   return NextResponse.json({ configured: true, profiles });
