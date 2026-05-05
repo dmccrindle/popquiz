@@ -113,9 +113,55 @@ type Body = {
   scheduledAt: number;
 };
 
-type CreatePostsData = {
-  createPosts?: { success?: boolean; message?: string };
+type CreatePostData = {
+  createPost?: { success?: boolean; message?: string };
 };
+
+type IntrospectionData = {
+  __schema?: {
+    mutationType?: {
+      fields?: Array<{
+        name: string;
+        args?: Array<{
+          name: string;
+          type?: { name?: string | null; ofType?: { name?: string | null } | null };
+        }>;
+      }>;
+    };
+  };
+};
+
+async function describeMutations(token: string): Promise<string> {
+  const { data } = await bufferGraphQL<IntrospectionData>(
+    token,
+    `query {
+      __schema {
+        mutationType {
+          fields {
+            name
+            args {
+              name
+              type { name ofType { name } }
+            }
+          }
+        }
+      }
+    }`
+  );
+  const fields = data?.__schema?.mutationType?.fields ?? [];
+  return fields
+    .slice(0, 20)
+    .map((f) => {
+      const args = (f.args ?? [])
+        .map(
+          (a) =>
+            `${a.name}:${a.type?.name ?? a.type?.ofType?.name ?? "?"}`
+        )
+        .join(", ");
+      return `${f.name}(${args})`;
+    })
+    .join(" | ");
+}
 
 export async function POST(request: Request) {
   const auth = await verifyAdminRequest(request);
@@ -155,17 +201,17 @@ export async function POST(request: Request) {
   // Buffer GraphQL expects ISO 8601 strings for DateTime fields.
   const scheduledIso = new Date(scheduledAt * 1000).toISOString();
 
-  const { data, error, status } = await bufferGraphQL<CreatePostsData>(
+  const { data, error, status } = await bufferGraphQL<CreatePostData>(
     token,
-    `mutation CreatePosts($input: CreatePostsInput!) {
-      createPosts(input: $input) {
+    `mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
         success
         message
       }
     }`,
     {
       input: {
-        channels: profileIds.map((id) => ({ id })),
+        channelIds: profileIds,
         text,
         scheduledAt: scheduledIso,
       },
@@ -173,11 +219,19 @@ export async function POST(request: Request) {
   );
 
   if (error) {
+    // If the mutation name or input shape is wrong, surface available mutations.
+    if (/Unknown type|Cannot query field|Unknown argument/i.test(error)) {
+      const probe = await describeMutations(token);
+      return NextResponse.json(
+        { error: `${error}\n\nAvailable mutations: ${probe}` },
+        { status }
+      );
+    }
     return NextResponse.json({ error }, { status });
   }
-  if (data?.createPosts?.success === false) {
+  if (data?.createPost?.success === false) {
     return NextResponse.json(
-      { error: data.createPosts.message || "Buffer rejected the post." },
+      { error: data.createPost.message || "Buffer rejected the post." },
       { status: 400 }
     );
   }
