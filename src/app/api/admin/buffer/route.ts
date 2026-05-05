@@ -238,30 +238,39 @@ export async function POST(request: Request) {
   }
 
   // Buffer GraphQL expects ISO 8601 strings for DateTime fields.
-  const scheduledIso = new Date(scheduledAt * 1000).toISOString();
+  const dueAtIso = new Date(scheduledAt * 1000).toISOString();
 
-  const { error, status } = await bufferGraphQL<CreatePostData>(
-    token,
-    `mutation CreatePost($input: CreatePostInput!) {
-      createPost(input: $input) {
-        __typename
-      }
-    }`,
-    {
-      input: {
-        channelIds: profileIds,
-        text,
-        scheduledAt: scheduledIso,
-        schedulingType: "SCHEDULED",
-      },
-    }
+  // CreatePostInput takes a single channelId per call. Fan out for each.
+  const results = await Promise.all(
+    profileIds.map((channelId) =>
+      bufferGraphQL<CreatePostData>(
+        token,
+        `mutation CreatePost($input: CreatePostInput!) {
+          createPost(input: $input) {
+            __typename
+          }
+        }`,
+        {
+          input: {
+            channelId,
+            text,
+            dueAt: dueAtIso,
+            schedulingType: "automatic",
+          },
+        }
+      )
+    )
   );
 
-  if (error) {
-    // Schema mismatch — surface relevant input/payload/enum shapes.
+  const failures = results
+    .map((r, i) => ({ channelId: profileIds[i], error: r.error }))
+    .filter((r) => r.error);
+
+  if (failures.length > 0) {
+    const first = failures[0].error ?? "";
     if (
       /Unknown type|Cannot query field|Unknown argument|expected type|does not exist/i.test(
-        error
+        first
       )
     ) {
       const [input, payload, sched] = await Promise.all([
@@ -271,13 +280,20 @@ export async function POST(request: Request) {
       ]);
       return NextResponse.json(
         {
-          error: `${error}\n\nInput shape: ${input}\n\nPayload shape: ${payload}\n\nSchedulingType: ${sched}`,
+          error: `${first}\n\nInput shape: ${input}\n\nPayload shape: ${payload}\n\nSchedulingType: ${sched}`,
         },
-        { status }
+        { status: 400 }
       );
     }
-    return NextResponse.json({ error }, { status });
+    return NextResponse.json(
+      {
+        error: `Failed on ${failures.length}/${profileIds.length} channel(s): ${failures
+          .map((f) => f.error)
+          .join("; ")}`,
+      },
+      { status: 502 }
+    );
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, scheduled: profileIds.length });
 }
