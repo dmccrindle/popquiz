@@ -247,6 +247,7 @@ export async function POST(request: Request) {
         channelIds: profileIds,
         text,
         scheduledAt: scheduledIso,
+        schedulingType: "SCHEDULED",
       },
     }
   );
