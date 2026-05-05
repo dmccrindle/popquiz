@@ -128,6 +128,7 @@ type TypeIntrospectionData = {
       name: string;
       type?: { name?: string | null; ofType?: { name?: string | null } | null };
     }>;
+    enumValues?: Array<{ name: string }>;
   };
 };
 
@@ -139,12 +140,16 @@ async function describeType(token: string, typeName: string): Promise<string> {
         name
         inputFields { name type { name ofType { name } } }
         fields { name type { name ofType { name } } }
+        enumValues { name }
       }
     }`,
     { n: typeName }
   );
   if (!data?.__type) return `${typeName} (not found)`;
   const t = data.__type;
+  if (t.enumValues?.length) {
+    return `${t.name} = ${t.enumValues.map((v) => v.name).join(" | ")}`;
+  }
   const fields = t.inputFields ?? t.fields ?? [];
   return `${t.name} { ${fields
     .map((f) => `${f.name}: ${f.type?.name ?? f.type?.ofType?.name ?? "?"}`)
@@ -253,16 +258,20 @@ export async function POST(request: Request) {
   );
 
   if (error) {
-    // Schema mismatch — surface mutation list + relevant input/payload shapes.
-    if (/Unknown type|Cannot query field|Unknown argument|expected type/i.test(error)) {
-      const [muts, input, payload] = await Promise.all([
-        describeMutations(token),
+    // Schema mismatch — surface relevant input/payload/enum shapes.
+    if (
+      /Unknown type|Cannot query field|Unknown argument|expected type|does not exist/i.test(
+        error
+      )
+    ) {
+      const [input, payload, sched] = await Promise.all([
         describeType(token, "CreatePostInput"),
         describeType(token, "PostActionPayload"),
+        describeType(token, "SchedulingType"),
       ]);
       return NextResponse.json(
         {
-          error: `${error}\n\nAvailable mutations: ${muts}\n\nInput shape: ${input}\n\nPayload shape: ${payload}`,
+          error: `${error}\n\nInput shape: ${input}\n\nPayload shape: ${payload}\n\nSchedulingType: ${sched}`,
         },
         { status }
       );
