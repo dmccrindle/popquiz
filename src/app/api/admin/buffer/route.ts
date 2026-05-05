@@ -256,6 +256,7 @@ export async function POST(request: Request) {
             text,
             dueAt: dueAtIso,
             schedulingType: "automatic",
+            mode: "schedule",
           },
         }
       )
@@ -269,18 +270,18 @@ export async function POST(request: Request) {
   if (failures.length > 0) {
     const first = failures[0].error ?? "";
     if (
-      /Unknown type|Cannot query field|Unknown argument|expected type|does not exist/i.test(
+      /Unknown type|Cannot query field|Unknown argument|expected type|required type|does not exist|was not provided/i.test(
         first
       )
     ) {
-      const [input, payload, sched] = await Promise.all([
+      const [input, sched, share] = await Promise.all([
         describeType(token, "CreatePostInput"),
-        describeType(token, "PostActionPayload"),
         describeType(token, "SchedulingType"),
+        describeType(token, "ShareMode"),
       ]);
       return NextResponse.json(
         {
-          error: `${first}\n\nInput shape: ${input}\n\nPayload shape: ${payload}\n\nSchedulingType: ${sched}`,
+          error: `${first}\n\nInput shape: ${input}\n\nSchedulingType: ${sched}\n\nShareMode: ${share}`,
         },
         { status: 400 }
       );
