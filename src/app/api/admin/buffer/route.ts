@@ -304,15 +304,13 @@ export async function POST(request: Request) {
     channels.map(({ id, service }) => {
       const composedText = composeText(service);
 
-      // Build per-platform metadata for topic + thread.
+      // Per-platform metadata: topic for Threads, follow-up reply via thread array.
       const platformMd: Record<string, unknown> = {};
       if (service === "threads" && threadsTopic) {
         platformMd.topic = threadsTopic;
       }
       if (followUp) {
-        // Put BOTH posts in the thread array; skip the top-level text. The
-        // main post is the first thread item, the follow-up is the second.
-        platformMd.thread = [{ text: composedText }, { text: followUp }];
+        platformMd.thread = [{ text: followUp }];
       }
 
       const metadata: Record<string, unknown> | undefined =
@@ -326,10 +324,9 @@ export async function POST(request: Request) {
             : undefined
           : undefined;
 
-      const usingThread = !!followUp;
       const input: Record<string, unknown> = {
         channelId: id,
-        ...(usingThread ? {} : { text: composedText }),
+        text: composedText,
         dueAt: dueAtIso,
         schedulingType: "automatic",
         mode: "customScheduled",
