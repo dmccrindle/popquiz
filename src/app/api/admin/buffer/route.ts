@@ -299,36 +299,43 @@ export async function POST(request: Request) {
     return body;
   }
 
-  function metadataFor(service: string): Record<string, unknown> | undefined {
-    const md: Record<string, unknown> = {};
-    if (service === "threads" && threadsTopic) {
-      md.threads = { topic: threadsTopic };
-    }
-    if (followUp) {
-      const replyText = composeText(service); // mirrors char rules; simplest: send followUp as-is
-      // ThreadedPostInput shape unknown — assume { text }. Will surface error if wrong.
-      const node: Record<string, unknown> = { thread: [{ text: followUp }] };
-      // attach under the service-specific metadata namespace
-      if (service === "twitter") md.twitter = { ...(md.twitter ?? {}), ...node };
-      else if (service === "threads") md.threads = { ...(md.threads ?? {}), ...node };
-      else if (service === "bluesky") md.bluesky = { ...(md.bluesky ?? {}), ...node };
-      void replyText;
-    }
-    return Object.keys(md).length > 0 ? md : undefined;
-  }
-
   // CreatePostInput takes a single channelId per call. Fan out for each.
   const results = await Promise.all(
     channels.map(({ id, service }) => {
+      const composedText = composeText(service);
+
+      // Build per-platform metadata for topic + thread.
+      const platformMd: Record<string, unknown> = {};
+      if (service === "threads" && threadsTopic) {
+        platformMd.topic = threadsTopic;
+      }
+      if (followUp) {
+        // Put BOTH posts in the thread array; skip the top-level text. The
+        // main post is the first thread item, the follow-up is the second.
+        platformMd.thread = [{ text: composedText }, { text: followUp }];
+      }
+
+      const metadata: Record<string, unknown> | undefined =
+        Object.keys(platformMd).length > 0
+          ? service === "twitter"
+            ? { twitter: platformMd }
+            : service === "threads"
+            ? { threads: platformMd }
+            : service === "bluesky"
+            ? { bluesky: platformMd }
+            : undefined
+          : undefined;
+
+      const usingThread = !!followUp;
       const input: Record<string, unknown> = {
         channelId: id,
-        text: composeText(service),
+        ...(usingThread ? {} : { text: composedText }),
         dueAt: dueAtIso,
         schedulingType: "automatic",
         mode: "customScheduled",
       };
-      const md = metadataFor(service);
-      if (md) input.metadata = md;
+      if (metadata) input.metadata = metadata;
+
       return bufferGraphQL<CreatePostData>(
         token,
         `mutation CreatePost($input: CreatePostInput!) {
