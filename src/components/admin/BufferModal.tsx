@@ -38,7 +38,6 @@ export default function BufferModal({
   initialHashtags = [],
   initialVideoUrl = "",
   initialTopic = "",
-  initialFollowUp = "",
   onClose,
   profiles,
   configured,
@@ -49,7 +48,6 @@ export default function BufferModal({
   initialHashtags?: string[];
   initialVideoUrl?: string;
   initialTopic?: string;
-  initialFollowUp?: string;
   onClose: () => void;
   profiles: BufferProfile[];
   configured: boolean;
@@ -64,7 +62,6 @@ export default function BufferModal({
   const [whenLocal, setWhenLocal] = useState(defaultScheduledAt());
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
   const [topic, setTopic] = useState(initialTopic);
-  const [followUp, setFollowUp] = useState(initialFollowUp);
   const [submitting, setSubmitting] = useState(false);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -75,9 +72,8 @@ export default function BufferModal({
       setWhenLocal(defaultScheduledAt());
       setVideoUrl(initialVideoUrl);
       setTopic(initialTopic);
-      setFollowUp(initialFollowUp);
     }
-  }, [open, initialText, initialVideoUrl, initialTopic, initialFollowUp, profiles]);
+  }, [open, initialText, initialVideoUrl, initialTopic, profiles]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,7 +150,6 @@ export default function BufferModal({
           videoUrl: videoUrl.trim() || undefined,
           hashtags: initialHashtags.length > 0 ? initialHashtags : undefined,
           threadsTopic: topic.trim() || undefined,
-          followUp: followUp.trim() || undefined,
           channels: selectedProfiles.map((p) => ({
             id: p.id,
             service: p.service,
@@ -331,23 +326,6 @@ export default function BufferModal({
             />
           </div>
         )}
-
-        <div className="space-y-2">
-          <label
-            htmlFor="buffer-followup"
-            className="text-xs font-bold text-white/60 uppercase tracking-wider"
-          >
-            Follow-up reply <span className="text-white/30 font-normal normal-case">(optional, sent as a thread)</span>
-          </label>
-          <textarea
-            id="buffer-followup"
-            value={followUp}
-            onChange={(e) => setFollowUp(e.target.value)}
-            rows={2}
-            placeholder="e.g. Play Bob Seger trivia at https://apps.apple.com/us/app/pop-quiz-music/id6760779842"
-            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white/90 leading-relaxed resize-y focus:outline-none focus:border-accent-pink/50 placeholder:text-white/25"
-          />
-        </div>
 
         <div className="space-y-2">
           <label

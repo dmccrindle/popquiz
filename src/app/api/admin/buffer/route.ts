@@ -126,7 +126,6 @@ type Body = {
   videoUrl?: string;
   hashtags?: string[];
   threadsTopic?: string;
-  followUp?: string;
   channels: ChannelRef[];
   // unix seconds
   scheduledAt: number;
@@ -268,7 +267,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { text, videoUrl, hashtags, threadsTopic, followUp, channels, scheduledAt } = body;
+  const { text, videoUrl, hashtags, threadsTopic, channels, scheduledAt } = body;
   if (!text || typeof text !== "string") {
     return NextResponse.json({ error: "Missing text." }, { status: 400 });
   }
@@ -304,24 +303,10 @@ export async function POST(request: Request) {
     channels.map(({ id, service }) => {
       const composedText = composeText(service);
 
-      // Per-platform metadata: topic for Threads, follow-up reply via thread array.
-      const platformMd: Record<string, unknown> = {};
-      if (service === "threads" && threadsTopic) {
-        platformMd.topic = threadsTopic;
-      }
-      if (followUp) {
-        platformMd.thread = [{ text: followUp }];
-      }
-
+      // Per-platform metadata (currently just Threads topic).
       const metadata: Record<string, unknown> | undefined =
-        Object.keys(platformMd).length > 0
-          ? service === "twitter"
-            ? { twitter: platformMd }
-            : service === "threads"
-            ? { threads: platformMd }
-            : service === "bluesky"
-            ? { bluesky: platformMd }
-            : undefined
+        service === "threads" && threadsTopic
+          ? { threads: { topic: threadsTopic } }
           : undefined;
 
       const input: Record<string, unknown> = {

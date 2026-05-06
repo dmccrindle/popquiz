@@ -15,12 +15,6 @@ type BriefItem = {
   video_url?: string; // user-pasted YouTube URL (client-only edit)
 };
 
-const APP_STORE_URL = "https://apps.apple.com/us/app/pop-quiz-music/id6760779842";
-
-function defaultFollowUp(artist?: string): string {
-  if (!artist) return "";
-  return `Play ${artist} trivia ${APP_STORE_URL}`;
-}
 
 type ReleaseItem = {
   date: string;
@@ -85,7 +79,6 @@ export default function BriefPanel() {
   const [bufferHashtags, setBufferHashtags] = useState<string[]>([]);
   const [bufferVideoUrl, setBufferVideoUrl] = useState("");
   const [bufferTopic, setBufferTopic] = useState("");
-  const [bufferFollowUp, setBufferFollowUp] = useState("");
 
   // Compute date keys client-side in the user's local timezone
   useEffect(() => {
@@ -223,7 +216,6 @@ export default function BriefPanel() {
     setBufferHashtags(opts?.hashtags ?? []);
     setBufferVideoUrl(opts?.videoUrl ?? "");
     setBufferTopic(opts?.artist ?? "");
-    setBufferFollowUp(defaultFollowUp(opts?.artist));
     setBufferOpen(true);
   }
 
@@ -360,7 +352,6 @@ export default function BriefPanel() {
         initialHashtags={bufferHashtags}
         initialVideoUrl={bufferVideoUrl}
         initialTopic={bufferTopic}
-        initialFollowUp={bufferFollowUp}
         profiles={bufferProfiles}
         configured={bufferConfigured}
         error={bufferError}
