@@ -20,6 +20,11 @@ const BriefItemSchema = z.object({
     .describe(
       "3-5 hashtags relevant to this specific moment. NO # prefix in the strings. Lowercase, no spaces. Mix specific (artist/album) and broader (genre/era). Avoid generic spam tags like #music."
     ),
+  video_search: z
+    .string()
+    .describe(
+      "A specific YouTube search query for a video that pairs well with this post — e.g. 'Bob Seger Night Moves official music video', 'Stevie Nicks Edge of Seventeen live 1981', 'Outkast Hey Ya official video'. Be specific enough to surface the official version. The admin will use this to find and paste the actual URL."
+    ),
 });
 
 const ReleaseItemSchema = z.object({
@@ -110,6 +115,7 @@ export async function generateBrief(targetDateKey?: string): Promise<Brief> {
       "Skip generic celebrity gossip. Skip anything that wouldn't land with a music-savvy audience.",
       "Each suggested_post is 1-2 sentences. Read like something a knowledgeable friend would text you, not something a brand would post. No setup-punchline structure.",
       "Each release angle is one sharp sentence on why fans should care — same voice rules.",
+      "For each item, also provide a video_search: a specific YouTube search query the admin will use to find an official video to attach to the post. Prefer official music videos, official live performances, or canonical interviews. Be specific (artist + song + 'official') so the top result is the right one.",
     ].join(" "),
     messages: [
       {

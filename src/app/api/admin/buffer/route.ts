@@ -145,14 +145,40 @@ type TypeIntrospectionData = {
   };
 };
 
+type TypeRef = {
+  kind?: string;
+  name?: string | null;
+  ofType?: TypeRef | null;
+};
+
+function unwrapType(t?: TypeRef | null): string {
+  if (!t) return "?";
+  if (t.kind === "NON_NULL") return `${unwrapType(t.ofType)}!`;
+  if (t.kind === "LIST") return `[${unwrapType(t.ofType)}]`;
+  return t.name ?? "?";
+}
+
 async function describeType(token: string, typeName: string): Promise<string> {
-  const { data } = await bufferGraphQL<TypeIntrospectionData>(
+  const { data } = await bufferGraphQL<{
+    __type?: {
+      name?: string | null;
+      inputFields?: Array<{ name: string; type?: TypeRef }>;
+      fields?: Array<{ name: string; type?: TypeRef }>;
+      enumValues?: Array<{ name: string }>;
+    };
+  }>(
     token,
     `query Desc($n: String!) {
       __type(name: $n) {
         name
-        inputFields { name type { name ofType { name } } }
-        fields { name type { name ofType { name } } }
+        inputFields {
+          name
+          type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
+        }
+        fields {
+          name
+          type { kind name ofType { kind name ofType { kind name ofType { kind name ofType { kind name } } } } }
+        }
         enumValues { name }
       }
     }`,
@@ -165,7 +191,7 @@ async function describeType(token: string, typeName: string): Promise<string> {
   }
   const fields = t.inputFields ?? t.fields ?? [];
   return `${t.name} { ${fields
-    .map((f) => `${f.name}: ${f.type?.name ?? f.type?.ofType?.name ?? "?"}`)
+    .map((f) => `${f.name}: ${unwrapType(f.type)}`)
     .join(", ")} }`;
 }
 
