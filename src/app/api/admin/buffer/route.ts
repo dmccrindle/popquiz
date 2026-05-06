@@ -119,9 +119,15 @@ export async function GET(request: Request) {
   return NextResponse.json({ configured: true, profiles });
 }
 
+type ChannelRef = { id: string; service: string };
+
 type Body = {
   text: string;
-  profileIds: string[];
+  videoUrl?: string;
+  hashtags?: string[];
+  threadsTopic?: string;
+  followUp?: string;
+  channels: ChannelRef[];
   // unix seconds
   scheduledAt: number;
 };
@@ -262,11 +268,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { text, profileIds, scheduledAt } = body;
+  const { text, videoUrl, hashtags, threadsTopic, followUp, channels, scheduledAt } = body;
   if (!text || typeof text !== "string") {
     return NextResponse.json({ error: "Missing text." }, { status: 400 });
   }
-  if (!Array.isArray(profileIds) || profileIds.length === 0) {
+  if (!Array.isArray(channels) || channels.length === 0) {
     return NextResponse.json(
       { error: "Pick at least one channel." },
       { status: 400 }
@@ -279,31 +285,64 @@ export async function POST(request: Request) {
   // Buffer GraphQL expects ISO 8601 strings for DateTime fields.
   const dueAtIso = new Date(scheduledAt * 1000).toISOString();
 
+  const hashtagsLine =
+    hashtags && hashtags.length > 0
+      ? hashtags.map((t) => `#${t}`).join(" ")
+      : "";
+
+  function composeText(service: string): string {
+    let body = text;
+    if (videoUrl) body = `${body}\n\n${videoUrl}`;
+    if (hashtagsLine && (service === "twitter" || service === "bluesky")) {
+      body = `${body}\n\n${hashtagsLine}`;
+    }
+    return body;
+  }
+
+  function metadataFor(service: string): Record<string, unknown> | undefined {
+    const md: Record<string, unknown> = {};
+    if (service === "threads" && threadsTopic) {
+      md.threads = { topic: threadsTopic };
+    }
+    if (followUp) {
+      const replyText = composeText(service); // mirrors char rules; simplest: send followUp as-is
+      // ThreadedPostInput shape unknown — assume { text }. Will surface error if wrong.
+      const node: Record<string, unknown> = { thread: [{ text: followUp }] };
+      // attach under the service-specific metadata namespace
+      if (service === "twitter") md.twitter = { ...(md.twitter ?? {}), ...node };
+      else if (service === "threads") md.threads = { ...(md.threads ?? {}), ...node };
+      else if (service === "bluesky") md.bluesky = { ...(md.bluesky ?? {}), ...node };
+      void replyText;
+    }
+    return Object.keys(md).length > 0 ? md : undefined;
+  }
+
   // CreatePostInput takes a single channelId per call. Fan out for each.
   const results = await Promise.all(
-    profileIds.map((channelId) =>
-      bufferGraphQL<CreatePostData>(
+    channels.map(({ id, service }) => {
+      const input: Record<string, unknown> = {
+        channelId: id,
+        text: composeText(service),
+        dueAt: dueAtIso,
+        schedulingType: "automatic",
+        mode: "customScheduled",
+      };
+      const md = metadataFor(service);
+      if (md) input.metadata = md;
+      return bufferGraphQL<CreatePostData>(
         token,
         `mutation CreatePost($input: CreatePostInput!) {
           createPost(input: $input) {
             __typename
           }
         }`,
-        {
-          input: {
-            channelId,
-            text,
-            dueAt: dueAtIso,
-            schedulingType: "automatic",
-            mode: "customScheduled",
-          },
-        }
-      )
-    )
+        { input }
+      );
+    })
   );
 
   const failures = results
-    .map((r, i) => ({ channelId: profileIds[i], error: r.error }))
+    .map((r, i) => ({ channel: channels[i], error: r.error }))
     .filter((r) => r.error);
 
   if (failures.length > 0) {
@@ -313,27 +352,29 @@ export async function POST(request: Request) {
         first
       )
     ) {
-      const [input, sched, share] = await Promise.all([
+      const [input, sched, share, meta, threaded] = await Promise.all([
         describeType(token, "CreatePostInput"),
         describeType(token, "SchedulingType"),
         describeType(token, "ShareMode"),
+        describeType(token, "PostInputMetaData"),
+        describeType(token, "ThreadedPostInput"),
       ]);
       return NextResponse.json(
         {
-          error: `${first}\n\nInput shape: ${input}\n\nSchedulingType: ${sched}\n\nShareMode: ${share}`,
+          error: `${first}\n\nInput: ${input}\n\nSchedulingType: ${sched}\n\nShareMode: ${share}\n\nPostInputMetaData: ${meta}\n\nThreadedPostInput: ${threaded}`,
         },
         { status: 400 }
       );
     }
     return NextResponse.json(
       {
-        error: `Failed on ${failures.length}/${profileIds.length} channel(s): ${failures
-          .map((f) => f.error)
+        error: `Failed on ${failures.length}/${channels.length} channel(s): ${failures
+          .map((f) => `${f.channel.service}: ${f.error}`)
           .join("; ")}`,
       },
       { status: 502 }
     );
   }
 
-  return NextResponse.json({ ok: true, scheduled: profileIds.length });
+  return NextResponse.json({ ok: true, scheduled: channels.length });
 }

@@ -10,6 +10,8 @@ type BriefItem = {
   angle: string;
   suggested_post: string;
   hashtags?: string[];
+  video_search?: string; // suggested YouTube search (from LLM)
+  video_url?: string; // user-pasted YouTube URL (client-only edit)
 };
 
 type ReleaseItem = {
@@ -72,6 +74,8 @@ export default function BriefPanel() {
   const [bufferError, setBufferError] = useState<string | null>(null);
   const [bufferOpen, setBufferOpen] = useState(false);
   const [bufferText, setBufferText] = useState("");
+  const [bufferHashtags, setBufferHashtags] = useState<string[]>([]);
+  const [bufferVideoUrl, setBufferVideoUrl] = useState("");
 
   // Compute date keys client-side in the user's local timezone
   useEffect(() => {
@@ -192,15 +196,15 @@ export default function BriefPanel() {
         setBufferProfiles(data.profiles);
         setBufferError(data.error ?? null);
 
-        // Probe thread shape so we can build follow-up reply support.
+        // Probe ThreadedPostInput shape.
         const probeRes = await fetch(
-          "/api/admin/buffer?probe=TwitterPostMetadataInput,ThreadsPostMetadataInput,BlueskyPostMetadataInput,TwitterThreadPostInput,ThreadsThreadPostInput,BlueskyThreadPostInput,ThreadPostInput,LinkAttachmentInput",
+          "/api/admin/buffer?probe=ThreadedPostInput",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (probeRes.ok) {
           const probe = await probeRes.json();
           // eslint-disable-next-line no-console
-          console.log("[Buffer thread schema]", JSON.stringify(probe, null, 2));
+          console.log("[ThreadedPostInput]", JSON.stringify(probe, null, 2));
         }
       } catch {
         // ignore — Buffer is optional
@@ -208,8 +212,13 @@ export default function BriefPanel() {
     })();
   }, [user]);
 
-  function openBuffer(text: string) {
+  function openBuffer(
+    text: string,
+    opts?: { hashtags?: string[]; videoUrl?: string }
+  ) {
     setBufferText(text);
+    setBufferHashtags(opts?.hashtags ?? []);
+    setBufferVideoUrl(opts?.videoUrl ?? "");
     setBufferOpen(true);
   }
 
@@ -225,6 +234,12 @@ export default function BriefPanel() {
   function updateItemPost(i: number, value: string) {
     setEditedItems((curr) =>
       curr.map((it, idx) => (idx === i ? { ...it, suggested_post: value } : it))
+    );
+  }
+
+  function updateItemVideoUrl(i: number, value: string) {
+    setEditedItems((curr) =>
+      curr.map((it, idx) => (idx === i ? { ...it, video_url: value } : it))
     );
   }
 
@@ -337,6 +352,8 @@ export default function BriefPanel() {
         open={bufferOpen}
         onClose={() => setBufferOpen(false)}
         initialText={bufferText}
+        initialHashtags={bufferHashtags}
+        initialVideoUrl={bufferVideoUrl}
         profiles={bufferProfiles}
         configured={bufferConfigured}
         error={bufferError}
@@ -385,13 +402,43 @@ export default function BriefPanel() {
                         Copy
                       </button>
                       <button
-                        onClick={() => openBuffer(item.suggested_post)}
+                        onClick={() =>
+                          openBuffer(item.suggested_post, {
+                            hashtags: item.hashtags,
+                            videoUrl: item.video_url,
+                          })
+                        }
                         className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"
                       >
                         Schedule
                       </button>
                     </div>
                   </div>
+                  {item.video_search && (
+                    <div className="pt-2 border-t border-white/5 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                          Video
+                        </span>
+                        <a
+                          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(item.video_search)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-white/60 hover:text-white truncate max-w-full underline decoration-white/20 hover:decoration-white/60"
+                          title={item.video_search}
+                        >
+                          {item.video_search}
+                        </a>
+                      </div>
+                      <input
+                        type="url"
+                        value={item.video_url ?? ""}
+                        onChange={(e) => updateItemVideoUrl(i, e.target.value)}
+                        placeholder="Paste YouTube URL here"
+                        className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white/85 focus:outline-none focus:border-accent-pink/50 placeholder:text-white/25"
+                      />
+                    </div>
+                  )}
                   {item.hashtags && item.hashtags.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
                       <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">

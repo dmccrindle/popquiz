@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdminAuth } from "./AdminAuthGate";
 import { useToast } from "./Toast";
 
@@ -25,7 +25,6 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 function defaultScheduledAt(): string {
-  // Default: tomorrow 9:00 in user's local tz, formatted for datetime-local input
   const d = new Date();
   d.setDate(d.getDate() + 1);
   d.setHours(9, 0, 0, 0);
@@ -36,6 +35,8 @@ function defaultScheduledAt(): string {
 export default function BufferModal({
   open,
   initialText,
+  initialHashtags = [],
+  initialVideoUrl = "",
   onClose,
   profiles,
   configured,
@@ -43,6 +44,8 @@ export default function BufferModal({
 }: {
   open: boolean;
   initialText: string;
+  initialHashtags?: string[];
+  initialVideoUrl?: string;
   onClose: () => void;
   profiles: BufferProfile[];
   configured: boolean;
@@ -55,6 +58,9 @@ export default function BufferModal({
     () => new Set(profiles.map((p) => p.id))
   );
   const [whenLocal, setWhenLocal] = useState(defaultScheduledAt());
+  const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
+  const [topic, setTopic] = useState("");
+  const [followUp, setFollowUp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -63,8 +69,11 @@ export default function BufferModal({
       setText(initialText);
       setSelectedIds(new Set(profiles.map((p) => p.id)));
       setWhenLocal(defaultScheduledAt());
+      setVideoUrl(initialVideoUrl);
+      setTopic("");
+      setFollowUp("");
     }
-  }, [open, initialText, profiles]);
+  }, [open, initialText, initialVideoUrl, profiles]);
 
   useEffect(() => {
     if (!open) return;
@@ -88,6 +97,28 @@ export default function BufferModal({
       return next;
     });
   }
+
+  // Preview the per-channel composed text so the user can sanity-check char counts.
+  const selectedProfiles = useMemo(
+    () => profiles.filter((p) => selectedIds.has(p.id)),
+    [profiles, selectedIds]
+  );
+
+  const hashtagsLine =
+    initialHashtags.length > 0
+      ? initialHashtags.map((t) => `#${t}`).join(" ")
+      : "";
+
+  function composeForService(service: string): string {
+    let body = text;
+    if (videoUrl.trim()) body = `${body}\n\n${videoUrl.trim()}`;
+    if (hashtagsLine && (service === "twitter" || service === "bluesky")) {
+      body = `${body}\n\n${hashtagsLine}`;
+    }
+    return body;
+  }
+
+  const hasThreads = selectedProfiles.some((p) => p.service === "threads");
 
   async function submit() {
     if (!user) return;
@@ -116,7 +147,14 @@ export default function BufferModal({
         },
         body: JSON.stringify({
           text,
-          profileIds: Array.from(selectedIds),
+          videoUrl: videoUrl.trim() || undefined,
+          hashtags: initialHashtags.length > 0 ? initialHashtags : undefined,
+          threadsTopic: topic.trim() || undefined,
+          followUp: followUp.trim() || undefined,
+          channels: selectedProfiles.map((p) => ({
+            id: p.id,
+            service: p.service,
+          })),
           scheduledAt: Math.floor(scheduled.getTime() / 1000),
         }),
       });
@@ -134,8 +172,6 @@ export default function BufferModal({
   }
 
   if (!open) return null;
-
-  const charsOver = (limit: number) => text.length > limit;
 
   return (
     <div
@@ -189,21 +225,29 @@ export default function BufferModal({
           />
           <div className="text-[10px] text-white/40 flex items-center gap-3 flex-wrap">
             <span>{text.length} chars</span>
-            {profiles.map((p) => {
+            {selectedProfiles.map((p) => {
               const limit = SERVICE_LIMITS[p.service];
               if (!limit) return null;
-              const over = charsOver(limit);
+              const composed = composeForService(p.service);
+              const over = composed.length > limit;
               return (
                 <span
                   key={p.id}
                   className={over ? "text-red-400" : "text-white/40"}
                 >
-                  {SERVICE_LABELS[p.service] ?? p.service}: {text.length}/{limit}
+                  {SERVICE_LABELS[p.service] ?? p.service}: {composed.length}/{limit}
                   {over ? " over" : ""}
                 </span>
               );
             })}
           </div>
+          {(videoUrl.trim() || hashtagsLine) && (
+            <p className="text-[10px] text-white/30 italic">
+              {videoUrl.trim() && "Video URL appended to all channels. "}
+              {hashtagsLine &&
+                "Hashtags auto-appended on X / Bluesky (Threads uses Topic instead)."}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -246,6 +290,59 @@ export default function BufferModal({
               })}
             </div>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="buffer-video"
+            className="text-xs font-bold text-white/60 uppercase tracking-wider"
+          >
+            Video URL <span className="text-white/30 font-normal normal-case">(optional)</span>
+          </label>
+          <input
+            id="buffer-video"
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white/90 focus:outline-none focus:border-accent-pink/50 placeholder:text-white/25"
+          />
+        </div>
+
+        {hasThreads && (
+          <div className="space-y-2">
+            <label
+              htmlFor="buffer-topic"
+              className="text-xs font-bold text-white/60 uppercase tracking-wider"
+            >
+              Threads topic <span className="text-white/30 font-normal normal-case">(optional)</span>
+            </label>
+            <input
+              id="buffer-topic"
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. music, throwback, ’80s"
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white/90 focus:outline-none focus:border-accent-pink/50 placeholder:text-white/25"
+            />
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label
+            htmlFor="buffer-followup"
+            className="text-xs font-bold text-white/60 uppercase tracking-wider"
+          >
+            Follow-up reply <span className="text-white/30 font-normal normal-case">(optional, sent as a thread)</span>
+          </label>
+          <textarea
+            id="buffer-followup"
+            value={followUp}
+            onChange={(e) => setFollowUp(e.target.value)}
+            rows={2}
+            placeholder="e.g. Play Bob Seger trivia at https://apps.apple.com/us/app/pop-quiz-music/id6760779842"
+            className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white/90 leading-relaxed resize-y focus:outline-none focus:border-accent-pink/50 placeholder:text-white/25"
+          />
         </div>
 
         <div className="space-y-2">
