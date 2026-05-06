@@ -191,6 +191,17 @@ export default function BriefPanel() {
         setBufferConfigured(data.configured);
         setBufferProfiles(data.profiles);
         setBufferError(data.error ?? null);
+
+        // Probe thread shape so we can build follow-up reply support.
+        const probeRes = await fetch(
+          "/api/admin/buffer?probe=TwitterPostMetadataInput,ThreadsPostMetadataInput,BlueskyPostMetadataInput,TwitterThreadPostInput,ThreadsThreadPostInput,BlueskyThreadPostInput,ThreadPostInput,LinkAttachmentInput",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (probeRes.ok) {
+          const probe = await probeRes.json();
+          // eslint-disable-next-line no-console
+          console.log("[Buffer thread schema]", JSON.stringify(probe, null, 2));
+        }
       } catch {
         // ignore — Buffer is optional
       }
