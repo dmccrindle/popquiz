@@ -37,6 +37,8 @@ export default function BufferModal({
   initialText,
   initialHashtags = [],
   initialVideoUrl = "",
+  initialTopic = "",
+  initialFollowUp = "",
   onClose,
   profiles,
   configured,
@@ -46,6 +48,8 @@ export default function BufferModal({
   initialText: string;
   initialHashtags?: string[];
   initialVideoUrl?: string;
+  initialTopic?: string;
+  initialFollowUp?: string;
   onClose: () => void;
   profiles: BufferProfile[];
   configured: boolean;
@@ -59,8 +63,8 @@ export default function BufferModal({
   );
   const [whenLocal, setWhenLocal] = useState(defaultScheduledAt());
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
-  const [topic, setTopic] = useState("");
-  const [followUp, setFollowUp] = useState("");
+  const [topic, setTopic] = useState(initialTopic);
+  const [followUp, setFollowUp] = useState(initialFollowUp);
   const [submitting, setSubmitting] = useState(false);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -70,10 +74,10 @@ export default function BufferModal({
       setSelectedIds(new Set(profiles.map((p) => p.id)));
       setWhenLocal(defaultScheduledAt());
       setVideoUrl(initialVideoUrl);
-      setTopic("");
-      setFollowUp("");
+      setTopic(initialTopic);
+      setFollowUp(initialFollowUp);
     }
-  }, [open, initialText, initialVideoUrl, profiles]);
+  }, [open, initialText, initialVideoUrl, initialTopic, initialFollowUp, profiles]);
 
   useEffect(() => {
     if (!open) return;

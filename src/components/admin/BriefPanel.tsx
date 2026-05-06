@@ -7,12 +7,20 @@ import BufferModal, { type BufferProfile } from "./BufferModal";
 
 type BriefItem = {
   headline: string;
+  artist?: string;
   angle: string;
   suggested_post: string;
   hashtags?: string[];
   video_search?: string; // suggested YouTube search (from LLM)
   video_url?: string; // user-pasted YouTube URL (client-only edit)
 };
+
+const APP_STORE_URL = "https://apps.apple.com/us/app/pop-quiz-music/id6760779842";
+
+function defaultFollowUp(artist?: string): string {
+  if (!artist) return "";
+  return `Play ${artist} trivia ${APP_STORE_URL}`;
+}
 
 type ReleaseItem = {
   date: string;
@@ -76,6 +84,8 @@ export default function BriefPanel() {
   const [bufferText, setBufferText] = useState("");
   const [bufferHashtags, setBufferHashtags] = useState<string[]>([]);
   const [bufferVideoUrl, setBufferVideoUrl] = useState("");
+  const [bufferTopic, setBufferTopic] = useState("");
+  const [bufferFollowUp, setBufferFollowUp] = useState("");
 
   // Compute date keys client-side in the user's local timezone
   useEffect(() => {
@@ -195,17 +205,6 @@ export default function BriefPanel() {
         setBufferConfigured(data.configured);
         setBufferProfiles(data.profiles);
         setBufferError(data.error ?? null);
-
-        // Probe ThreadedPostInput shape.
-        const probeRes = await fetch(
-          "/api/admin/buffer?probe=ThreadedPostInput",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (probeRes.ok) {
-          const probe = await probeRes.json();
-          // eslint-disable-next-line no-console
-          console.log("[ThreadedPostInput]", JSON.stringify(probe, null, 2));
-        }
       } catch {
         // ignore — Buffer is optional
       }
@@ -214,11 +213,17 @@ export default function BriefPanel() {
 
   function openBuffer(
     text: string,
-    opts?: { hashtags?: string[]; videoUrl?: string }
+    opts?: {
+      hashtags?: string[];
+      videoUrl?: string;
+      artist?: string;
+    }
   ) {
     setBufferText(text);
     setBufferHashtags(opts?.hashtags ?? []);
     setBufferVideoUrl(opts?.videoUrl ?? "");
+    setBufferTopic(opts?.artist ?? "");
+    setBufferFollowUp(defaultFollowUp(opts?.artist));
     setBufferOpen(true);
   }
 
@@ -354,6 +359,8 @@ export default function BriefPanel() {
         initialText={bufferText}
         initialHashtags={bufferHashtags}
         initialVideoUrl={bufferVideoUrl}
+        initialTopic={bufferTopic}
+        initialFollowUp={bufferFollowUp}
         profiles={bufferProfiles}
         configured={bufferConfigured}
         error={bufferError}
@@ -406,6 +413,7 @@ export default function BriefPanel() {
                           openBuffer(item.suggested_post, {
                             hashtags: item.hashtags,
                             videoUrl: item.video_url,
+                            artist: item.artist,
                           })
                         }
                         className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"
@@ -524,7 +532,8 @@ export default function BriefPanel() {
                             <button
                               onClick={() =>
                                 openBuffer(
-                                  `${r.artist} — ${r.title} (${label}). ${r.angle}`
+                                  `${r.artist} — ${r.title} (${label}). ${r.angle}`,
+                                  { artist: r.artist }
                                 )
                               }
                               className="px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-pink to-accent-purple text-white text-xs font-semibold hover:opacity-90 transition-opacity"

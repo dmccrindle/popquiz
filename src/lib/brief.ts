@@ -5,6 +5,11 @@ import { getAdminDb } from "./firebase-admin";
 
 const BriefItemSchema = z.object({
   headline: z.string().describe("Short, punchy headline for the moment"),
+  artist: z
+    .string()
+    .describe(
+      "The single primary artist or band this post is about, formatted naturally (e.g. 'Bob Seger', 'Outkast', 'Stevie Nicks'). If the post is about multiple artists or a non-artist topic (chart milestone with no clear lead), pick the most prominent one. Used for tagging and follow-up CTAs."
+    ),
   angle: z
     .string()
     .describe("Why this matters today — anniversary, release, news cycle, etc."),
